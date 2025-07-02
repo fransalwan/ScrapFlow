@@ -1,0 +1,14 @@
+# air.toml
+
+# optional: binary build config
+[build]
+  cmd = "go build -o tmp/main ."
+  bin = "tmp/main"
+  include_ext = ["go", "env"]
+  exclude_dir = ["tmp", "vendor"]
+  delay = 1000
+
+# 👇 ENV mode yang aktif
+[env]
+  APP_ENV = "mock"      # ganti ke "dev" atau "prod" sesuai kebutuhan
+  GIN_MODE = "debug"

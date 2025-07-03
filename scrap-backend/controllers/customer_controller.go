@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 
@@ -12,7 +11,6 @@ import (
 
 func GetCustomers(c *gin.Context) {
 	if os.Getenv("APP_ENV") == "mock" {
-		fmt.Println(">>>>>>>>>>>>>>>>>>>>Running in mock mode")
 		// return dummy data
 		c.JSON(http.StatusOK, gin.H{"data": []models.Customer{
 			{Name: "Mock Customer", Phone: "000", Address: "Mock City"},

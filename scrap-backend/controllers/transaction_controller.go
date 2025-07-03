@@ -17,7 +17,7 @@ func GetTransactions(c *gin.Context) {
 
 	if appEnv == "mock" {
 		// dummy customer
-		dummy := models.Customer{
+		dummyCustomer := models.Customer{
 			ID:      1,
 			Name:    "Mock Customer",
 			Phone:   "000",

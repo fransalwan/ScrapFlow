@@ -15,7 +15,7 @@ func main() {
 
 	// skip AutoMigrate kalau mode mock
 	if os.Getenv("APP_ENV") != "mock" {
-		config.DB.AutoMigrate(&models.Supplier{}, &models.Transaction{})
+		config.DB.AutoMigrate(&models.Customer{}, &models.Transaction{})
 	}
 
 	routes.SetupRoutes(r)

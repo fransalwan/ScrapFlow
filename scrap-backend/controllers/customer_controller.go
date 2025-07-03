@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -9,23 +10,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetSuppliers(c *gin.Context) {
+func GetCustomers(c *gin.Context) {
 	if os.Getenv("APP_ENV") == "mock" {
+		fmt.Println(">>>>>>>>>>>>>>>>>>>>Running in mock mode")
 		// return dummy data
-		c.JSON(http.StatusOK, gin.H{"data": []models.Supplier{
-			{Name: "Mock Supplier", Phone: "000", Address: "Mock City"},
+		c.JSON(http.StatusOK, gin.H{"data": []models.Customer{
+			{Name: "Mock Customer", Phone: "000", Address: "Mock City"},
 		}})
 		return
 	}
 
 	// real logic
-	var suppliers []models.Supplier
-	config.DB.Find(&suppliers)
-	c.JSON(http.StatusOK, gin.H{"data": suppliers})
+	var customers []models.Customer
+	config.DB.Find(&customers)
+	c.JSON(http.StatusOK, gin.H{"data": customers})
 }
 
-func CreateSupplier(c *gin.Context) {
-	var input models.Supplier
+func CreateCustomer(c *gin.Context) {
+	var input models.Customer
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

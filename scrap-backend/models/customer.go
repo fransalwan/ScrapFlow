@@ -1,9 +1,9 @@
-// supplier.go
+// customer.go
 package models
 
 import "time"
 
-type Supplier struct {
+type Customer struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	Name      string    `json:"name"`
 	Phone     string    `json:"phone"`

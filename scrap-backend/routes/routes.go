@@ -8,8 +8,8 @@ import (
 func SetupRoutes(r *gin.Engine) {
 	api := r.Group("/api")
 	{
-		api.GET("/suppliers", controllers.GetSuppliers)
-		api.POST("/suppliers", controllers.CreateSupplier)
+		api.GET("/customers", controllers.GetCustomers)
+		api.POST("/customers", controllers.CreateCustomer)
 
 		api.GET("/transactions", controllers.GetTransactions)
 		api.POST("/transactions", controllers.CreateTransaction)

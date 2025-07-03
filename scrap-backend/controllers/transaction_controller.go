@@ -16,10 +16,10 @@ func GetTransactions(c *gin.Context) {
 	appEnv := os.Getenv("APP_ENV")
 
 	if appEnv == "mock" {
-		// dummy supplier
-		dummySupplier := models.Supplier{
+		// dummy customer
+		dummy := models.Customer{
 			ID:      1,
-			Name:    "Mock Supplier",
+			Name:    "Mock Customer",
 			Phone:   "000",
 			Address: "Mock City",
 		}
@@ -27,8 +27,8 @@ func GetTransactions(c *gin.Context) {
 		// dummy transaction
 		dummyTransaction := models.Transaction{
 			ID:         1,
-			SupplierID: dummySupplier.ID,
-			Supplier:   dummySupplier,
+			CustomerID: dummyCustomer.ID,
+			Customer:   dummyCustomer,
 			Material:   "Besi Tua",
 			Weight:     120,
 			PricePerKg: 3500,
@@ -42,7 +42,7 @@ func GetTransactions(c *gin.Context) {
 
 	// Real DB logic
 	var transactions []models.Transaction
-	config.DB.Preload("Supplier").Find(&transactions)
+	config.DB.Preload("Customer").Find(&transactions)
 	c.JSON(http.StatusOK, gin.H{"data": transactions})
 }
 
@@ -60,15 +60,15 @@ func CreateTransaction(c *gin.Context) {
 	input.Total = input.Weight * input.PricePerKg
 
 	if appEnv == "mock" {
-		dummySupplier := models.Supplier{
-			ID:      input.SupplierID,
-			Name:    "Mock Supplier " + fmt.Sprint(input.SupplierID),
+		dummyCustomer := models.Customer{
+			ID:      input.CustomerID,
+			Name:    "Mock Customer " + fmt.Sprint(input.CustomerID),
 			Phone:   "000",
 			Address: "Mock City",
 		}
 
-		// Inject dummy supplier ke dalam relasi transaction
-		input.Supplier = dummySupplier
+		// Inject dummy customer ke dalam relasi transaction
+		input.Customer = dummyCustomer
 
 		c.JSON(http.StatusOK, gin.H{
 			"data": input,

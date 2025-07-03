@@ -4,8 +4,8 @@ import "time"
 
 type Transaction struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
-	SupplierID uint      `json:"supplier_id"`
-	Supplier   Supplier  `gorm:"foreignKey:SupplierID" json:"supplier"`
+	CustomerID uint      `json:"customer_id"`
+	Customer   Customer  `gorm:"foreignKey:CustomerID" json:"customer"`
 	Material   string    `json:"material"`
 	Weight     float64   `json:"weight"`
 	PricePerKg float64   `json:"price_per_kg"`

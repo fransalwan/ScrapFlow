@@ -9,6 +9,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetInvoices(c *gin.Context) {
+	var invoices []models.Invoice
+
+	// Ambil semua invoice dengan preload relasi yang diperlukan
+	if err := config.DB.
+		Preload("Customer").
+		Preload("Summaries").
+		Preload("Summaries.Item").
+		Find(&invoices).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch invoices"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Invoices fetched successfully",
+		"data":    invoices,
+	})
+}
+
 func GetInvoiceByID(c *gin.Context) {
 	id := c.Param("id")
 

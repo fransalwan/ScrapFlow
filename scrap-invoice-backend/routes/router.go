@@ -1,12 +1,15 @@
 package routes
 
 import (
+	"log"
 	"scrap-invoice-backend/controllers"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterRoutes(r *gin.Engine) {
+	log.Println("Setting up CORS middleware...")
+
 	// inisialisasi CRUD customer
 	customer := r.Group("/api")
 	{
@@ -19,6 +22,7 @@ func RegisterRoutes(r *gin.Engine) {
 	// inisialisasi CRUD invoice
 	invoice := r.Group("/api")
 	{
+		invoice.GET("/invoices", controllers.GetInvoices)
 		invoice.GET("/invoice/:id", controllers.GetInvoiceByID)
 		invoice.POST("/invoice", controllers.CreateInvoice)
 		invoice.PUT("/invoice/:id", controllers.UpdateInvoice)

@@ -3,12 +3,12 @@ package models
 import "time"
 
 type Customer struct {
-	ID        int       `gorm:"column:id_customer;primaryKey" json:"id"`
-	Name      string    `gorm:"column:name" json:"name"`
-	Phone     string    `gorm:"column:phone" json:"phone"`
-	Email     string    `gorm:"column:email" json:"email"`
-	Address   string    `gorm:"column:address" json:"address"`
-	Tier      string    `gorm:"column:tier" json:"tier"`
-	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+	ID        int       `gorm:"column:customer_id;primaryKey" json:"id"`
+	Name      string    `json:"name"`
+	Phone     string    `json:"phone"`
+	Email     string    `json:"email"`
+	Address   string    `json:"address"`
+	Tier      string    `json:"tier"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

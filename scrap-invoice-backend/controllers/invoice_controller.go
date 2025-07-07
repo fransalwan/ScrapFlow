@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"scrap-invoice-backend/config"
 	"scrap-invoice-backend/models"
@@ -9,6 +8,25 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+func GetInvoiceByID(c *gin.Context) {
+	id := c.Param("id")
+
+	var invoice models.Invoice
+	if err := config.DB.
+		Preload("Customer").
+		Preload("Summaries").
+		Preload("Summaries.Item").
+		First(&invoice, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Invoice found",
+		"data":    invoice,
+	})
+}
 
 func CreateInvoice(c *gin.Context) {
 	var invoice models.Invoice
@@ -18,23 +36,23 @@ func CreateInvoice(c *gin.Context) {
 		return
 	}
 
-	// Optional: generate invoice number kalau belum ada
-	if invoice.InvoiceNumber == "" {
-		invoice.InvoiceNumber = fmt.Sprintf("INV-%d", time.Now().Unix())
-	}
-
-	// Validasi minimum: customer_id dan created_by harus ada
-	if invoice.CustomerID == 0 || invoice.CreatedBy == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "customer_id and created_by are required"})
+	// Cek apakah invoice_number sudah dipakai
+	var existing models.Invoice
+	if err := config.DB.Where("invoice_number = ?", invoice.InvoiceNumber).First(&existing).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invoice number already exists"})
 		return
 	}
 
-	// Simpan invoice dan summary (jika ada)
-	if err := config.DB.Create(&invoice).Error; err != nil {
+	// Set default values
+	if invoice.Status == "" {
+		invoice.Status = "draft"
+	}
 
-		// kasih liat isi invoice untuk debugging
-		fmt.Printf("Failed to create invoice:>>>>>>>>>> %+v\n", invoice)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal insert invoice: " + err.Error()})
+	invoice.CreatedAt = time.Now()
+
+	// Simpan ke DB
+	if err := config.DB.Create(&invoice).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create invoice: " + err.Error()})
 		return
 	}
 
@@ -42,4 +60,49 @@ func CreateInvoice(c *gin.Context) {
 		"message": "Invoice created successfully",
 		"data":    invoice,
 	})
+}
+
+func UpdateInvoice(c *gin.Context) {
+	id := c.Param("id")
+	var invoice models.Invoice
+
+	// Cari invoice berdasarkan ID
+	if err := config.DB.First(&invoice, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+		return
+	}
+
+	// Bind data baru ke struct invoice
+	if err := c.ShouldBindJSON(&invoice); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON: " + err.Error()})
+		return
+	}
+
+	// Update ke DB
+	if err := config.DB.Save(&invoice).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update invoice: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Invoice updated successfully",
+		"data":    invoice,
+	})
+}
+
+func DeleteInvoice(c *gin.Context) {
+	id := c.Param("id")
+
+	var invoice models.Invoice
+	if err := config.DB.First(&invoice, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+		return
+	}
+
+	if err := config.DB.Delete(&invoice).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Invoice deleted successfully"})
 }

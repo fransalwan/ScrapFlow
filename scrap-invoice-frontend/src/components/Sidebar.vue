@@ -7,23 +7,31 @@
   ></div>
 
   <!-- Sidebar -->
-  <aside
+<aside
   :class="[
-    'w-48 md:w-52 h-screen bg-gray-900 text-white fixed top-0 left-0 z-50 transition-transform transform',
+    'w-48 md:w-52 bg-gray-900 text-white fixed md:sticky top-0 left-0 z-50 transition-transform transform',
     isOpen ? 'translate-x-0' : '-translate-x-full',
-    'md:translate-x-0 md:relative md:z-auto'
+    'md:translate-x-0 md:z-auto',
   ]"
+  style="min-height: 100vh"
 >
     <div class="p-6 text-2xl font-bold border-b border-gray-700">
       🧾 InvoiceApp
     </div>
-    <nav class="flex-1 p-4 space-y-2">
+    <nav class="flex-1 p-4 space-y-2 pb-24">
       <RouterLink
         to="/"
         class="block py-2 px-4 rounded hover:bg-gray-700"
         active-class="bg-gray-800"
       >
         Dashboard
+      </RouterLink>
+      <RouterLink
+        to="/invoice-list"
+        class="block py-2 px-4 rounded hover:bg-gray-700 border-gray-700 border-b"
+        active-class="bg-gray-800"
+      >
+        Invoice List
       </RouterLink>
       <RouterLink
         to="/customers"
@@ -33,11 +41,18 @@
         Customers
       </RouterLink>
       <RouterLink
-        to="/invoice-list"
+        to="/item-categories"
         class="block py-2 px-4 rounded hover:bg-gray-700"
         active-class="bg-gray-800"
       >
-        Invoice List
+        Category Item
+      </RouterLink>
+      <RouterLink
+        to="/items"
+        class="block py-2 px-4 rounded hover:bg-gray-700"
+        active-class="bg-gray-800"
+      >
+        Item
       </RouterLink>
     </nav>
   </aside>

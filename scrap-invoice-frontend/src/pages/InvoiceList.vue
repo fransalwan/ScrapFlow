@@ -84,15 +84,6 @@
               required
             />
           </div>
-          <div class="mb-4">
-            <label class="block mb-1">Total (Rp)</label>
-            <input
-              v-model.number="form.total"
-              type="number"
-              class="w-full border rounded px-3 py-2"
-              required
-            />
-          </div>
           <div class="flex justify-end gap-2">
             <button type="button" @click="resetModal" class="px-4 py-2 bg-gray-200 rounded">
               Cancel
@@ -119,7 +110,6 @@ interface Invoice {
   number: string
   customer: string
   date: string
-  total: number
 }
 
 const router = useRouter()
@@ -130,14 +120,12 @@ const invoices = ref<Invoice[]>([
     number: 'INV-001',
     customer: 'PT. Baja Jaya',
     date: '2025-07-01',
-    total: 13500000,
   },
   {
     id: 2,
     number: 'INV-002',
     customer: 'CV. Efrata',
     date: '2025-07-05',
-    total: 7400000,
   },
 ])
 
@@ -149,7 +137,6 @@ const form = ref({
   number: '',
   customer: '',
   date: '',
-  total: 0,
 })
 
 function goToDetail(id: number) {
@@ -185,7 +172,7 @@ function deleteInvoice(id: number) {
 }
 
 function resetForm() {
-  form.value = { number: '', customer: '', date: '', total: 0 }
+  form.value = { number: '', customer: '', date: ''}
   editingId.value = null
 }
 

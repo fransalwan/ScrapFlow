@@ -10,5 +10,5 @@ type Item struct {
 	CreatedAt      time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt      time.Time `gorm:"column:updated_at" json:"updated_at"`
 
-	Category ItemCategory `gorm:"foreignKey:ItemCategoryID" json:"category"`
+	Category ItemCategory `gorm:"foreignKey:ItemCategoryID;references:ID" json:"category"`
 }

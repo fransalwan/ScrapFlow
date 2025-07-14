@@ -4,13 +4,17 @@ import CustomerPage from '../pages/CustomerPage.vue'
 import InvoiceList from '../pages/InvoiceList.vue'
 import InvoiceDetail from '../pages/InvoiceDetail.vue'
 import ScaleDetail from '../pages/ScaleDetail.vue'
+import ItemCategoryPage from '../pages/ItemCategoryPage.vue'
+import ItemPage from '../pages/ItemPage.vue'
 
 const routes = [
   { path: '/', name: 'Dashboard', component: Dashboard },
-  { path: '/customers', name: 'Customers', component: CustomerPage },
   { path: '/invoice/:id/scales', name: 'ScaleDetail', component: ScaleDetail },
   { path: '/invoice-list', name: 'InvoiceList', component: InvoiceList },
   { path: '/invoice/:id', name: 'InvoiceDetail', component: InvoiceDetail },
+  { path: '/customers', name: 'Customers', component: CustomerPage },
+  { path: '/item-categories', name: 'ItemCategoryPage', component: ItemCategoryPage },
+  { path: '/items', name: 'Items', component: ItemPage },
 ]
 
 const router = createRouter({

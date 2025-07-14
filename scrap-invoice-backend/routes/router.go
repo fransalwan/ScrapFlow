@@ -1,23 +1,12 @@
 package routes
 
 import (
-	"log"
 	"scrap-invoice-backend/controllers"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterRoutes(r *gin.Engine) {
-	log.Println("Setting up CORS middleware...")
-
-	// inisialisasi CRUD customer
-	customer := r.Group("/api")
-	{
-		customer.GET("/customers", controllers.GetCustomers)
-		customer.POST("/customer", controllers.CreateCustomer)
-		customer.PUT("/customer/:id", controllers.UpdateCustomer)
-		customer.DELETE("/customer/:id", controllers.DeleteCustomer)
-	}
 
 	// inisialisasi CRUD invoice
 	invoice := r.Group("/api")
@@ -41,10 +30,7 @@ func RegisterRoutes(r *gin.Engine) {
 	// inisialisasi CRUD summary
 	summary := r.Group("/api")
 	{
-		// summary.GET("/summary/:id", controllers.GetSummary)
 		summary.POST("/summary/:invoice_id", controllers.GenerateSummary)
-		// summary.PUT("/summary/:id", controllers.UpdateSummary)
-		// summary.DELETE("/summary/:id", controllers.DeleteSummary)
 	}
 
 	// inisialisasi print pdf
@@ -52,4 +38,31 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		print.GET("/invoices/:id/pdf", controllers.GetInvoicePDF)
 	}
+
+	// inisialisasi CRUD customer
+	customer := r.Group("/api")
+	{
+		customer.GET("/customers", controllers.GetCustomers)
+		customer.POST("/customer", controllers.CreateCustomer)
+		customer.PUT("/customer/:id", controllers.UpdateCustomer)
+		customer.DELETE("/customer/:id", controllers.DeleteCustomer)
+	}
+
+	// inisialisasi CRUD Category Item
+	category := r.Group("/api")
+	{
+		category.GET("/categories", controllers.GetCategories)
+		category.POST("/category", controllers.CreateCategory)
+		category.PUT("/category/:id", controllers.UpdateCategory)
+		category.DELETE("/category/:id", controllers.DeleteCategory)
+	}
+
+	item := r.Group("/api")
+	{
+		item.GET("/items", controllers.GetItems)
+		item.POST("/item", controllers.CreateItem)
+		item.PUT("/item/:id", controllers.UpdateItem)
+		item.DELETE("/item/:id", controllers.DeleteItem)
+	}
+
 }

@@ -107,7 +107,7 @@
 </router-link>
 <button
         @click="showPreview = true"
-        class="bg-green-600 text-white px-2 py-2 rounded hover:bg-green-700 inline-block mt-6  text-white px-4 py-2 rounded"
+        class="bg-green-600  hover:bg-green-700 inline-block mt-6  text-white px-4 py-2 rounded"
       >
         🖨 Cetak Invoice
       </button>

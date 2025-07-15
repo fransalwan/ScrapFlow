@@ -1,7 +1,7 @@
 // stores/item.ts
 import { defineStore } from 'pinia'
 import axios from '../lib/axios'
-import type { Item, ItemFormInput, ItemFormPayload } from '../types/item'
+import type { Item, ItemFormPayload } from '../types/item'
 
 export const useItemStore = defineStore('item', {
   state: () => ({

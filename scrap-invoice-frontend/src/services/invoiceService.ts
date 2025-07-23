@@ -14,7 +14,6 @@ export async function createInvoiceAPI(payload: InvoiceForm): Promise<Invoice> {
 }
 
 export async function updateInvoiceAPI(id: number, payload: InvoiceForm): Promise<Invoice> {
-  console.log("Payload yang dikirim:", payload)
   const res = await axios.put(`${BASE_URL}/invoice/${id}`, payload)
   return res.data.data
 }
@@ -22,3 +21,4 @@ export async function updateInvoiceAPI(id: number, payload: InvoiceForm): Promis
 export async function deleteInvoiceAPI(id: number): Promise<void> {
   await axios.delete(`${BASE_URL}/invoice/${id}`)
 }
+

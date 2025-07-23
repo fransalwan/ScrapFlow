@@ -2,114 +2,62 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"scrap-invoice-backend/config"
 	"scrap-invoice-backend/models"
-	"sort"
 
 	"github.com/gin-gonic/gin"
 )
 
-type SummaryResponse struct {
-	InvoiceID   int     `json:"invoice_id"`
-	ItemID      int     `json:"item_id"`
-	ItemName    string  `json:"item_name"`
-	TotalWeight float64 `json:"total_weight"`
-	PricePerKg  float64 `json:"price_per_kg"`
-	TotalPrice  float64 `json:"total_price"`
-}
-
-func GenerateSummary(c *gin.Context) {
-	invoiceID := c.Param("invoice_id")
-
-	// 1. Validasi invoice
-	var invoice models.Invoice
-	if err := config.DB.First(&invoice, invoiceID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
-		return
-	}
-
-	// 2. Ambil semua scale_detail yang belum masuk summary
+func GetScaleSummaryByInvoice(c *gin.Context) {
+	invoiceId := c.Param("id")
 	var scaleDetails []models.ScaleDetail
+	var grandTotal float64 // FIXED: ubah dari int ke float64
+
+	// Step 1: Ambil semua scale_detail dengan relasi item
 	if err := config.DB.
 		Preload("Item").
-		Where("invoice_id = ? AND summary_id IS NULL", invoiceID).
+		Where("invoice_id = ?", invoiceId).
 		Find(&scaleDetails).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch scale details"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get scale details"})
 		return
 	}
 
-	if len(scaleDetails) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No new scale details to summarize"})
-		return
+	type Summary struct {
+		ItemID        int     `json:"item_id"`
+		ItemName      string  `json:"item_name"`
+		PricePerKg    float64 `json:"price_per_kg"`
+		TotalWeight   float64 `json:"total_weight"`
+		SubTotalPrice float64 `json:"sub_total_price"`
 	}
 
-	// 3. Kelompokkan berdasarkan item_id
-	summaryMap := make(map[int]*models.Summary)
-	itemNameMap := make(map[int]string) // buat sorting by item_name
-	for _, detail := range scaleDetails {
-		if summaryMap[detail.ItemID] == nil {
-			summaryMap[detail.ItemID] = &models.Summary{
-				InvoiceID:     detail.InvoiceID,
-				ItemID:        detail.ItemID,
-				TotalWeight:   0,
-				SubTotalPrice: 0,
+	summaryMap := make(map[int]*Summary)
+
+	for _, sd := range scaleDetails {
+		item := sd.Item
+
+		if _, ok := summaryMap[item.ID]; !ok {
+			summaryMap[item.ID] = &Summary{
+				ItemID:     item.ID,
+				ItemName:   item.ItemName,
+				PricePerKg: item.PricePerKg,
 			}
-			itemNameMap[detail.ItemID] = detail.Item.ItemName
-		}
-		summaryMap[detail.ItemID].TotalWeight += detail.Weight
-		summaryMap[detail.ItemID].SubTotalPrice += detail.Weight * detail.Item.PricePerKg
-	}
-
-	// 4. Simpan ke DB dan update scale_detail
-	var responseList []SummaryResponse
-	var totalWeight float64
-	var totalPrice float64
-	for itemID, summary := range summaryMap {
-		if err := config.DB.Create(summary).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save summary"})
-			return
 		}
 
-		// Update semua scale_detail yang belum tersummary
-		config.DB.Model(&models.ScaleDetail{}).
-			Where("invoice_id = ? AND item_id = ? AND summary_id IS NULL", summary.InvoiceID, summary.ItemID).
-			Update("summary_id", summary.ID)
-
-		// Akumulasi invoice
-		totalWeight += summary.TotalWeight
-		totalPrice += summary.SubTotalPrice
-
-		responseList = append(responseList, SummaryResponse{
-			InvoiceID:   summary.InvoiceID,
-			ItemID:      summary.ItemID,
-			ItemName:    itemNameMap[itemID],
-			TotalWeight: summary.TotalWeight,
-			PricePerKg:  summary.SubTotalPrice / summary.TotalWeight,
-			TotalPrice:  summary.SubTotalPrice,
-		})
+		summary := summaryMap[item.ID]
+		summary.TotalWeight += sd.Weight
+		summary.SubTotalPrice = summary.TotalWeight * summary.PricePerKg
 	}
 
-	// 5. Update total invoice
-	result := config.DB.Model(&models.Invoice{}).
-		Where("invoice_id = ?", invoice.ID).
-		Updates(map[string]interface{}{
-			"total_weight": totalWeight,
-			"total_price":  totalPrice,
-		})
+	// Convert map ke slice
+	summaries := make([]Summary, 0, len(summaryMap))
+	for _, s := range summaryMap {
+		summaries = append(summaries, *s)
+		grandTotal += s.SubTotalPrice // FIXED: Sekarang ga error
+	}
 
-	fmt.Println("Rows affected:", result.RowsAffected)
-	fmt.Println("Error:", result.Error)
-
-	// 6. Urutkan berdasarkan nama item
-	sort.Slice(responseList, func(i, j int) bool {
-		return responseList[i].ItemName < responseList[j].ItemName
-	})
-
-	// 7. Response
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Summaries created successfully",
-		"data":    responseList,
+		"data":       summaries,
+		"grandTotal": grandTotal, // bisa lo aktifin sekarang
 	})
 }

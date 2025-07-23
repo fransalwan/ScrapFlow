@@ -4,85 +4,110 @@ package controllers
 import (
 	"net/http"
 	"scrap-invoice-backend/config"
+	"scrap-invoice-backend/dto"
 	"scrap-invoice-backend/models"
 	"scrap-invoice-backend/models/response"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func GetScaleDetail(c *gin.Context) {
-	id := c.Param("id")
-	var detail models.ScaleDetail
+func GetScaleDetailsByInvoiceID(c *gin.Context) {
+	invoiceID := c.Param("id") // pakai nama yang sama kayak di route
+	var details []models.ScaleDetail
 
-	if err := config.DB.Preload("Item.Category").Preload("Invoice").First(&detail, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Scale detail not found"})
+	if err := config.DB.
+		Preload("Item.Category").
+		Preload("Invoice").
+		Where("invoice_id = ?", invoiceID).
+		Find(&details).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Scale details not found"})
 		return
 	}
 
-	responseData := response.ScaleDetailResponse{
-		ID:         detail.ID,
-		Weight:     detail.Weight,
-		AlasWeight: detail.AlasWeight,
-		Photo:      detail.Photo,
-		ScaleType:  detail.ScaleType,
-		CreatedAt:  detail.CreatedAt,
-		Invoice: response.InvoiceInfo{
-			ID:            detail.Invoice.ID,
-			InvoiceNumber: detail.Invoice.InvoiceNumber,
-		},
-		Item: response.ItemInfo{
-			ID:       detail.Item.ID,
-			Name:     detail.Item.ItemName,
-			Category: detail.Item.Category.ItemCategoryName,
-		},
+	var responseData []response.ScaleDetailResponse
+	for _, d := range details {
+		responseData = append(responseData, response.ScaleDetailResponse{
+			ID:         d.ID,
+			Weight:     d.Weight,
+			AlasWeight: d.AlasWeight,
+			Photo:      d.Photo,
+			ScaleType:  d.ScaleType,
+			CreatedAt:  d.CreatedAt,
+			Invoice: response.InvoiceInfo{
+				ID:            d.Invoice.ID,
+				InvoiceNumber: d.Invoice.InvoiceNumber,
+			},
+			Item: response.ItemInfo{
+				ID:       d.Item.ID,
+				Name:     d.Item.ItemName,
+				Category: d.Item.Category.ItemCategoryName,
+			},
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": responseData})
 }
 
 func CreateScaleDetail(c *gin.Context) {
-	var input models.ScaleDetail
+	// Convert :id
+	invoiceID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid invoice ID"})
+		return
+	}
 
+	// Bind ke DTO
+	var input dto.CreateScaleDetailInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	input.CreatedAt = time.Now()
-	input.UpdatedAt = time.Now()
+	// Map ke model
+	scaleDetail := models.ScaleDetail{
+		InvoiceID:  invoiceID,
+		ItemID:     input.ItemID,
+		Weight:     input.Weight,
+		AlasWeight: input.AlasWeight,
+		Photo:      input.Photo,
+		ScaleType:  input.ScaleType,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
 
-	if err := config.DB.Create(&input).Error; err != nil {
+	// Simpan
+	if err := config.DB.Create(&scaleDetail).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal simpan scale detail"})
 		return
 	}
 
 	// Load relasi
-	var detail models.ScaleDetail
 	if err := config.DB.
 		Preload("Item.Category").
 		Preload("Invoice").
-		First(&detail, input.ID).Error; err != nil {
+		First(&scaleDetail, scaleDetail.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal load relasi"})
 		return
 	}
 
-	// Mapping ke DTO
-	response := response.ScaleDetailResponse{
-		ID:         detail.ID,
-		Weight:     detail.Weight,
-		AlasWeight: detail.AlasWeight,
-		Photo:      detail.Photo,
-		ScaleType:  detail.ScaleType,
-		CreatedAt:  detail.CreatedAt,
-		Invoice: response.InvoiceInfo{
-			ID:            detail.Invoice.ID,
-			InvoiceNumber: detail.Invoice.InvoiceNumber,
+	// Mapping ke response DTO
+	response := dto.ScaleDetailResponse{
+		ID:         scaleDetail.ID,
+		Weight:     scaleDetail.Weight,
+		AlasWeight: scaleDetail.AlasWeight,
+		Photo:      scaleDetail.Photo,
+		ScaleType:  scaleDetail.ScaleType,
+		CreatedAt:  scaleDetail.CreatedAt,
+		Invoice: dto.InvoiceInfo{
+			ID:            scaleDetail.Invoice.ID,
+			InvoiceNumber: scaleDetail.Invoice.InvoiceNumber,
 		},
-		Item: response.ItemInfo{
-			ID:       detail.Item.ID,
-			Name:     detail.Item.ItemName,
-			Category: detail.Item.Category.ItemCategoryName,
+		Item: dto.ItemInfo{
+			ID:       scaleDetail.Item.ID,
+			Name:     scaleDetail.Item.ItemName,
+			Category: scaleDetail.Item.Category.ItemCategoryName,
 		},
 	}
 

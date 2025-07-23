@@ -27,7 +27,7 @@
         Dashboard
       </RouterLink>
       <RouterLink
-        to="/invoice-list"
+        to="/invoices"
         class="block py-2 px-4 rounded hover:bg-gray-700 border-gray-700 border-b"
         active-class="bg-gray-800"
       >

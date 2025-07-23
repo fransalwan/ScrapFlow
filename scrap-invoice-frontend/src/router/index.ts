@@ -9,9 +9,9 @@ import ItemPage from '../pages/ItemPage.vue'
 
 const routes = [
   { path: '/', name: 'Dashboard', component: Dashboard },
-  { path: '/invoice-list', name: 'InvoiceList', component: InvoiceList },
+  { path: '/invoices', name: 'InvoiceList', component: InvoiceList },
   { path: '/invoice/:id/scales', name: 'ScaleDetail', component: ScaleDetail },
-  { path: '/invoice/:id', name: 'InvoiceDetail', component: InvoiceDetail },
+  { path: '/invoice/:id/summary', name: 'InvoiceDetail', component: InvoiceDetail },
   { path: '/customers', name: 'Customers', component: CustomerPage },
   { path: '/item-categories', name: 'ItemCategoryPage', component: ItemCategoryPage },
   { path: '/items', name: 'Items', component: ItemPage },

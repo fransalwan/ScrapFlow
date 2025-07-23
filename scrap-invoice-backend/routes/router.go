@@ -16,27 +16,14 @@ func RegisterRoutes(r *gin.Engine) {
 		invoice.POST("/invoice", controllers.CreateInvoice)
 		invoice.PUT("/invoice/:id", controllers.UpdateInvoice)
 		invoice.DELETE("/invoice/:id", controllers.DeleteInvoice)
-	}
 
-	//inisialisasi CRUD scale detail
-	scaleDetail := r.Group("/api")
-	{
-		scaleDetail.GET("/scale_detail/:id", controllers.GetScaleDetail)
-		scaleDetail.POST("/scale_detail", controllers.CreateScaleDetail)
-		scaleDetail.PUT("/scale_detail/:id", controllers.UpdateScaleDetail)
-		scaleDetail.DELETE("/scale_detail/:id", controllers.DeleteScaleDetail)
-	}
+		invoice.GET("/invoice/:id/scales", controllers.GetScaleDetailsByInvoiceID)
+		invoice.POST("/invoice/:id/scales", controllers.CreateScaleDetail)
+		invoice.PUT("/invoice/:id/scales", controllers.UpdateScaleDetail)
+		invoice.DELETE("/invoice/:id/scales", controllers.DeleteScaleDetail)
 
-	// inisialisasi CRUD summary
-	summary := r.Group("/api")
-	{
-		summary.POST("/summary/:invoice_id", controllers.GenerateSummary)
-	}
-
-	// inisialisasi print pdf
-	print := r.Group("/api")
-	{
-		print.GET("/invoices/:id/pdf", controllers.GetInvoicePDF)
+		invoice.GET("/invoice/:id/summary", controllers.GetScaleSummaryByInvoice)
+		invoice.GET("/invoice/:id/print", controllers.GetInvoicePDF)
 	}
 
 	// inisialisasi CRUD customer

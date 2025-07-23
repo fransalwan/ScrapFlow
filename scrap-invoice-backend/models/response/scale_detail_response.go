@@ -8,7 +8,7 @@ type ScaleDetailResponse struct {
 	Item       ItemInfo    `json:"item"`
 	Weight     float64     `json:"weight"`
 	AlasWeight float64     `json:"alas_weight"`
-	Photo      string      `json:"photo_url"`
+	Photo      string      `json:"photo"`
 	ScaleType  string      `json:"scale_type"`
 	CreatedAt  time.Time   `json:"created_at"`
 }

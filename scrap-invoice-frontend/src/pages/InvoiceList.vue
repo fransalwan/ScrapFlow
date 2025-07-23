@@ -27,7 +27,7 @@
             v-for="invoice in invoices"
             :key="invoice.id"
             class="hover:bg-gray-50 cursor-pointer"
-            @click="goToDetail(invoice.id)"
+            @click="goToScaleDetail(invoice.id)"
           >
             <td class="px-4 py-3 font-mono">{{ invoice.invoice_number }}</td>
             <td class="px-4 py-3">{{ invoice.customer.name }}</td>
@@ -189,9 +189,13 @@ onMounted(async () => {
   await customerStore.fetchCustomers()
 })
 
-function goToDetail(id: number) {
-  router.push(`/invoice/${id}`)
+function goToScaleDetail(id: number) {
+  router.push(`/invoice/${id}/scales`)
 }
+
+// function goToDetail(id: number) {
+//   router.push(`/invoice/${id}`)
+// }
 
 function formatDateShort(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('id-ID', {

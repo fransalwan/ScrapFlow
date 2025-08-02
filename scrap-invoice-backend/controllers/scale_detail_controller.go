@@ -2,6 +2,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"scrap-invoice-backend/config"
 	"scrap-invoice-backend/dto"
@@ -77,6 +78,21 @@ func CreateScaleDetail(c *gin.Context) {
 		UpdatedAt:  time.Now(),
 	}
 
+	if input.ScaleType == "TL" {
+
+		// clone to FI
+		clone := scaleDetail
+		clone.ScaleType = "FI"
+		clone.ID = 0 // biar auto increment
+		clone.CreatedAt = time.Now()
+		clone.UpdatedAt = time.Now()
+
+		if err := config.DB.Create(&clone).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal kloning scale detail ke FI"})
+			return
+		}
+	}
+
 	// Simpan
 	if err := config.DB.Create(&scaleDetail).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal simpan scale detail"})
@@ -118,6 +134,7 @@ func CreateScaleDetail(c *gin.Context) {
 }
 
 func UpdateScaleDetail(c *gin.Context) {
+	fmt.Println("Updating scale detail...", c.Param("id"))
 	id := c.Param("id")
 	var existing models.ScaleDetail
 

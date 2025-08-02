@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -18,21 +17,37 @@ func main() {
 	log.Println("Setting up CORS middleware...")
 	config.ConnectDB()
 
-	r := gin.Default()
+	r := gin.New() // Ganti dari gin.Default() biar middleware gak ketiban
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
-	// CORS Middleware
 	r.Use(cors.New(cors.Config{
-		AllowOriginFunc: func(origin string) bool {
-			log.Println("CORS origin check:", origin) // <-- log di sini
-			// Allow semua localhost:xxxx (dev tools, vite, dkk)
-			return strings.HasPrefix(origin, "http://localhost:")
-		},
+		AllowOrigins:     []string{"http://localhost:5173"}, // ⛔ Jangan pakai "*" di production
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true, // Set true kalau pakai cookie / token auth
+		AllowOriginFunc: func(origin string) bool {
+			// Tambahin logic whitelist kalau mau custom (misalnya banyak domain frontend)
+			// return origin == "https://frontend.example.com"
+			return true // ⚠️ sementara buat dev, true
+		},
+		MaxAge: 12 * time.Hour,
 	}))
 
+	// Logging buat debugging route
+	r.Use(func(c *gin.Context) {
+		log.Printf("REQ: %s %s", c.Request.Method, c.Request.URL.Path)
+		c.Next()
+		log.Println("RES HEADERS:", c.Writer.Header())
+	})
+
+	// Handler preflight OPTIONS
+	r.OPTIONS("/*path", func(c *gin.Context) {
+		c.Status(204)
+	})
+
+	// Register route
 	routes.RegisterRoutes(r)
 
 	if err := r.Run(":8080"); err != nil {

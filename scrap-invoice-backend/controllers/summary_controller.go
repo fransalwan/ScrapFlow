@@ -12,9 +12,7 @@ import (
 func GetScaleSummaryByInvoice(c *gin.Context) {
 	invoiceId := c.Param("id")
 	var scaleDetails []models.ScaleDetail
-	var grandTotal float64 // FIXED: ubah dari int ke float64
 
-	// Step 1: Ambil semua scale_detail dengan relasi item
 	if err := config.DB.
 		Preload("Item").
 		Where("invoice_id = ?", invoiceId).
@@ -31,33 +29,42 @@ func GetScaleSummaryByInvoice(c *gin.Context) {
 		SubTotalPrice float64 `json:"sub_total_price"`
 	}
 
-	summaryMap := make(map[int]*Summary)
+	// Nested map[scale_type][item_id]*Summary
+	summaryMap := make(map[string]map[int]*Summary)
+	grandTotalMap := make(map[string]float64)
 
 	for _, sd := range scaleDetails {
+		scaleType := sd.ScaleType
 		item := sd.Item
 
-		if _, ok := summaryMap[item.ID]; !ok {
-			summaryMap[item.ID] = &Summary{
+		if _, ok := summaryMap[scaleType]; !ok {
+			summaryMap[scaleType] = make(map[int]*Summary)
+		}
+
+		if _, ok := summaryMap[scaleType][item.ID]; !ok {
+			summaryMap[scaleType][item.ID] = &Summary{
 				ItemID:     item.ID,
 				ItemName:   item.ItemName,
 				PricePerKg: item.PricePerKg,
 			}
 		}
 
-		summary := summaryMap[item.ID]
+		summary := summaryMap[scaleType][item.ID]
 		summary.TotalWeight += sd.Weight
 		summary.SubTotalPrice = summary.TotalWeight * summary.PricePerKg
+		grandTotalMap[scaleType] += sd.Weight * summary.PricePerKg
 	}
 
-	// Convert map ke slice
-	summaries := make([]Summary, 0, len(summaryMap))
-	for _, s := range summaryMap {
-		summaries = append(summaries, *s)
-		grandTotal += s.SubTotalPrice // FIXED: Sekarang ga error
+	// Convert to JSON serializable format
+	finalData := make(map[string][]Summary)
+	for scaleType, items := range summaryMap {
+		for _, summary := range items {
+			finalData[scaleType] = append(finalData[scaleType], *summary)
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"data":       summaries,
-		"grandTotal": grandTotal, // bisa lo aktifin sekarang
+		"data":       finalData,
+		"grandTotal": grandTotalMap,
 	})
 }

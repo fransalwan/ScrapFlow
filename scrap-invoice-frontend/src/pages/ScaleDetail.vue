@@ -6,8 +6,23 @@
       <p class="text-gray-500">Rekap penimbangan per item</p>
     </div>
 
+    <!-- Filter Scale Type -->
+    <div class="flex gap-2 mb-4">
+      <button
+        v-for="type in ['FI', 'TL', 'TG', 'TS']"
+        :key="type"
+        @click="setFilter(type)"
+        :class="[
+          'px-3 py-1 rounded text-sm',
+          activeFilter === type ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'
+        ]"
+      >
+        {{ type }}
+      </button>
+    </div>
+
     <!-- Daftar Penimbangan -->
-    <div v-for="(item, iIndex) in scaleDetails" :key="item.id" class="mb-6">
+    <div v-for="(item, iIndex) in filteredScaleDetails" :key="item.id" class="mb-6">
       <div class="bg-white rounded shadow px-4 py-3 flex justify-between items-center gap-4 border-b">
         <!-- KIRI: Foto + Info -->
         <div class="flex items-center gap-4">
@@ -24,29 +39,25 @@
         </div>
 
         <!-- KANAN: Berat + Alas -->
- <div class="flex justify-between items-center">
-  <!-- Bagian kiri: Berat dan alas -->
-  <div class="text-right">
-    <div class="flex items-center gap-2">
-      <span class="w-24">{{ item.weight }} kg</span>
-    </div>
-    <span class="text-xs text-gray-400">- {{ item.alas_weight || 0 }} kg (alas)</span>
-  </div>
+        <div class="flex justify-between items-center">
+          <div class="text-right">
+            <div class="flex items-center gap-2">
+              <span class="w-24">{{ item.weight }} kg</span>
+            </div>
+            <span class="text-xs text-gray-400">- {{ item.alas_weight || 0 }} kg (alas)</span>
+          </div>
 
-  <!-- Bagian kanan: Icon edit dan hapus -->
-  <div class="flex items-center gap-2 ml-4">
-    <Pencil
-      @click="openEditModal(item)"
-      class="w-5 h-5 text-blue-500 hover:text-blue-700 cursor-pointer"
-    />
-    <Trash2
-      @click="handleDeleteScaleDetail(item.id)"
-      class="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer"
-    />
-  </div>
-</div>
-
-
+          <div class="flex items-center gap-2 ml-4">
+            <Pencil
+              @click="openEditModal(item)"
+              class="w-5 h-5 text-blue-500 hover:text-blue-700 cursor-pointer"
+            />
+            <Trash2
+              @click="handleDeleteScaleDetail(item.id)"
+              class="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -61,9 +72,8 @@
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div class="bg-white p-6 rounded w-full max-w-md shadow">
         <h3 class="text-xl font-bold mb-4">
-  {{ isEdit ? 'Edit Timbangan' : 'Tambah Timbangan' }}
-</h3>
-
+          {{ isEdit ? 'Edit Timbangan' : 'Tambah Timbangan' }}
+        </h3>
 
         <form @submit.prevent="handleSubmitScaleDetail">
           <div class="mb-4">
@@ -91,23 +101,13 @@
             <input v-model="form.photo" type="text" class="w-full border rounded px-3 py-2" />
           </div>
 
-          <div class="mb-4">
-            <label class="block mb-1">Tipe Penimbangan</label>
-            <select v-model="form.scale_type" class="w-full border rounded px-3 py-2" required>
-              <option disabled value="">Pilih tipe</option>
-              <option value="Netto">Netto</option>
-              <option value="Bruto">Bruto</option>
-              <option value="Kg">Kg</option>
-            </select>
-          </div>
 
           <div class="flex justify-end gap-2">
-  <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-  <button :disabled="isSubmitting" type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">
-  {{ isSubmitting ? 'Menyimpan...' : (isEdit ? 'Update' : 'Create') }}
-</button>
-
-</div>
+            <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
+            <button :disabled="isSubmitting" type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">
+              {{ isSubmitting ? 'Menyimpan...' : (isEdit ? 'Update' : 'Create') }}
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -117,7 +117,7 @@
       <router-link :to="`/invoices`" class="text-sm px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">
         ← Kembali ke Invoice List
       </router-link>
-      <router-link :to="`/invoice/${invoiceId}/summary`" class="text-sm px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">
+      <router-link v-if="activeFilter === 'FI'" :to="`/invoice/${invoiceId}/summary`" class="text-sm px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">
         Summary
       </router-link>
     </div>
@@ -125,97 +125,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import MainLayout from '../layouts/MainLayout.vue'
+import { ref, watch, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useScaleStore } from '../stores/scale'
 import { useItemStore } from '../stores/items'
 import { useToast } from 'vue-toastification'
 import { Pencil, Trash2 } from 'lucide-vue-next'
-import type { ScaleDetailPayload, ScaleDetailResponse } from '../types/scale'
+import Swal from 'sweetalert2'
+import type { ScaleDetailResponse } from '../types/scale'
 
-const selectedItem = ref(null)
-const isEdit = ref(false)
-
-const handleEdit = (item: ScaleDetailResponse) => {
-  selectedItem.value = item // simpan semua data asli (termasuk id)
-
-  form.value = {
-    item_id: item.item.id, // ambil dari relasi nested
-    weight: item.weight,
-    alas_weight: item.alas_weight,
-    photo: item.photo, // optional tergantung apakah kamu pakai upload atau url
-    scale_type: item.scale_type,
-  }
-
-  isEdit.value = true
-}
-
-async function handleSubmitScaleDetail() {
-  if (!form.value.item_id || form.value.weight == null || form.value.weight <= 0 || !form.value.scale_type) {
-    toast.error('Barang, berat (>= 0), dan tipe wajib diisi.')
-    return
-  }
-
-  isSubmitting.value = true
-
-  try {
-    if (isEdit.value && selectedItem.value?.id) {
-      await scaleStore.updateScaleDetail(selectedItem.value.id, {
-        item_id: form.value.item_id,
-        weight: form.value.weight,
-        alas_weight: form.value.alas_weight ?? 0,
-        photo: form.value.photo,
-        scale_type: form.value.scale_type,
-      })
-
-      toast.success('Data timbangan berhasil diperbarui!')
-    } else {
-      await scaleStore.createScaleDetail(invoiceId, {
-        item_id: form.value.item_id,
-        weight: form.value.weight,
-        alas_weight: form.value.alas_weight ?? 0,
-        photo: form.value.photo,
-        scale_type: form.value.scale_type,
-      })
-
-      toast.success('Data timbangan berhasil ditambahkan!')
-    }
-
-    closeModal()
-    await scaleStore.fetchScaleDetails(invoiceId)
-  } catch (error) {
-    console.error('Gagal menyimpan data scale detail:', error)
-    toast.error('Terjadi kesalahan saat menyimpan data.')
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-function openEditModal(item: any) {
-  selectedItem.value = { ...item }
-  form.value = {
-    item_id: item.item_id,
-    weight: item.weight,
-    alas_weight: item.alas_weight,
-    photo: item.photo,
-    scale_type: item.scale_type,
-  }
-  isEdit.value = true
-  showModal.value = true
-}
-
-const toast = useToast()
-
-// Store & Route
 const route = useRoute()
 const invoiceId = Number(route.params.id)
 const scaleStore = useScaleStore()
 const itemStore = useItemStore()
+const toast = useToast()
 
-// State
 const showModal = ref(false)
 const isSubmitting = ref(false)
+const isEdit = ref(false)
+const selectedItem = ref<ScaleDetailResponse | null>(null)
+const activeFilter = ref<string>('FI')
 
 const form = ref({
   item_id: null,
@@ -227,7 +157,10 @@ const form = ref({
 
 const scaleDetails = ref<any[]>([])
 
-// Lifecycle
+const filteredScaleDetails = computed(() => {
+  return scaleDetails.value.filter(item => item.scale_type === activeFilter.value)
+})
+
 onMounted(() => {
   scaleStore.fetchScaleDetails(invoiceId)
   itemStore.fetchItems()
@@ -236,8 +169,8 @@ onMounted(() => {
 watch(
   () => scaleStore.scaleDetails,
   (details) => {
-    scaleDetails.value = details.map((d) => ({
-      id: d.id, // tambahin ini
+    scaleDetails.value = details.map(d => ({
+      id: d.id,
       item_id: d.item.id,
       item_name: d.item.name,
       weight: d.weight,
@@ -249,9 +182,9 @@ watch(
   { immediate: true }
 )
 
-// Actions
 function openModal() {
   resetForm()
+  form.value.scale_type = activeFilter.value // ✅ force isi tipe berdasarkan filter yang aktif
   showModal.value = true
 }
 
@@ -272,19 +205,78 @@ function resetForm() {
   selectedItem.value = null
 }
 
+function setFilter(type: string) {
+  activeFilter.value = type
+}
+
+async function handleSubmitScaleDetail() {
+  const { item_id, weight, alas_weight = 0, photo, scale_type } = form.value
+
+  if (!item_id || weight == null || weight <= 0 || !scale_type) {
+    toast.error('Barang, berat (>= 0), dan tipe wajib diisi.')
+    return
+  }
+
+  isSubmitting.value = true
+
+  try {
+    const payload = { item_id, weight, alas_weight, photo, scale_type }
+
+    if (isEdit.value) {
+      const scaleId = selectedItem.value?.id
+      if (!scaleId) throw new Error('ID timbangan tidak ditemukan.')
+
+      await scaleStore.updateScaleDetail(scaleId, payload)
+      toast.success('Data timbangan berhasil diperbarui!')
+    } else {
+      await scaleStore.createScaleDetail(invoiceId, payload)
+      toast.success('Data timbangan berhasil ditambahkan!')
+    }
+
+    closeModal()
+    await scaleStore.fetchScaleDetails(invoiceId)
+  } catch (error: any) {
+    console.error('Gagal menyimpan data scale detail:', error)
+    toast.error(error?.message || 'Terjadi kesalahan saat menyimpan data.')
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+function openEditModal(item: any) {
+  selectedItem.value = { ...item }
+  form.value = {
+    item_id: item.item_id,
+    weight: item.weight,
+    alas_weight: item.alas_weight,
+    photo: item.photo,
+    scale_type: item.scale_type,
+  }
+  isEdit.value = true
+  showModal.value = true
+}
+
 async function handleDeleteScaleDetail(scaleDetailId: number) {
-  const confirmDelete = window.confirm('Yakin mau hapus data timbangan ini?')
-  if (!confirmDelete) return
+  const result = await Swal.fire({
+    title: 'Yakin mau hapus data timbangan ini?',
+    text: 'Data yang dihapus tidak bisa dikembalikan.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#aaa',
+    confirmButtonText: 'Ya, hapus',
+    cancelButtonText: 'Batal',
+  })
+
+  if (!result.isConfirmed) return
 
   try {
     await scaleStore.deleteScaleDetail(scaleDetailId)
-
     toast.success('Data timbangan berhasil dihapus.')
-    await scaleStore.fetchScaleDetails(invoiceId) // refetch tanpa reload
+    await scaleStore.fetchScaleDetails(invoiceId)
   } catch (error) {
     console.error('Gagal menghapus scale detail:', error)
     toast.error('Gagal menghapus data.')
   }
 }
 </script>
-

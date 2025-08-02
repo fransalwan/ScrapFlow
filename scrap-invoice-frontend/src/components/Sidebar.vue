@@ -15,9 +15,6 @@
   ]"
   style="min-height: 100vh"
 >
-    <div class="p-6 text-2xl font-bold border-b border-gray-700">
-      🧾 InvoiceApp
-    </div>
     <nav class="flex-1 p-4 space-y-2 pb-24">
       <RouterLink
         to="/"

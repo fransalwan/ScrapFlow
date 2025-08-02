@@ -17,6 +17,7 @@ export interface ScaleDetailResponse {
 }
 
 export interface ScaleDetailPayload {
+  id?: number
   item_id: number
   weight: number
   alas_weight?: number

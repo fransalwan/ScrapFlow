@@ -2,11 +2,22 @@ package routes
 
 import (
 	"scrap-invoice-backend/controllers"
+	"scrap-invoice-backend/middleware.go"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterRoutes(r *gin.Engine) {
+
+	login := r.Group("/api")
+	{
+		login.POST("/login", controllers.Login)
+
+		// Protected route (contoh)
+		login.GET("/protected", middleware.AuthMiddleware(), func(c *gin.Context) {
+			c.JSON(200, gin.H{"message": "Lo berhasil akses route yang diproteksi!"})
+		})
+	}
 
 	// inisialisasi CRUD invoice
 	invoice := r.Group("/api")
@@ -24,6 +35,12 @@ func RegisterRoutes(r *gin.Engine) {
 
 		invoice.GET("/invoice/:id/summary", controllers.GetScaleSummaryByInvoice)
 		invoice.GET("/invoice/:id/print", controllers.GetInvoicePDF)
+	}
+
+	dashboard := r.Group("/api")
+	{
+		dashboard.GET("/invoices/count", controllers.GetInvoiceCount)
+		dashboard.GET("/customers/count", controllers.GetCustomerCount)
 	}
 
 	// inisialisasi CRUD customer

@@ -1,49 +1,58 @@
-// controllers/auth.go
 package controllers
 
 import (
 	"net/http"
-	"time"
+	"scrap-invoice-backend/config"
+	"scrap-invoice-backend/models"
+	"scrap-invoice-backend/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtKey = []byte("rahasia_lo_bro") // Ganti sama key lo di env
-
-type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type LoginResponse struct {
-	Token string `json:"token"`
+type LoginInput struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
 }
 
 func Login(c *gin.Context) {
-	var req LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+	var input LoginInput
+
+	// 1. Validasi input
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password are required"})
 		return
 	}
 
-	// Dummy validation (bisa diganti pake DB)
-	if req.Username != "admin" || req.Password != "123456" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+	// 2. Cari user di database
+	var user models.User
+	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
-	// Generate JWT token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": req.Username,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
-	})
+	// 3. Cek password (bandingkan hash bcrypt)
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
 
-	tokenString, err := token.SignedString(jwtKey)
+	// 4. Generate JWT Token
+	token, err := utils.GenerateToken(user.UserID, user.Role)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not sign token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, LoginResponse{Token: tokenString})
+	// 5. Return response
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"token":   token,
+		"user": gin.H{
+			"id":    user.UserID,
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		},
+	})
 }

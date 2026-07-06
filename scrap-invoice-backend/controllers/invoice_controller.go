@@ -13,6 +13,7 @@ import (
 
 func GetInvoices(c *gin.Context) {
 	var invoices []models.Invoice
+	fmt.Println("Hit GetInvoices!!!!!!!!!!!!")
 
 	// Ambil semua invoice dengan preload relasi yang diperlukan
 	if err := config.DB.
@@ -53,6 +54,7 @@ func CreateInvoice(c *gin.Context) {
 	// 1. Bind input dari frontend
 	var input dto.InvoiceInput
 	if err := c.ShouldBindJSON(&input); err != nil {
+
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON: " + err.Error()})
 		return
 	}

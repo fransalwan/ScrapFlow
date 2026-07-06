@@ -9,16 +9,16 @@ export async function fetchInvoicesAPI(): Promise<Invoice[]> {
 }
 
 export async function createInvoiceAPI(payload: InvoiceForm): Promise<Invoice> {
-  const res = await axios.post(`${BASE_URL}/invoice`, payload)
+  const res = await axios.post(`${BASE_URL}/invoices`, payload)
   return res.data.data // asumsi response backend bentuknya { data: {...} }
 }
 
 export async function updateInvoiceAPI(id: number, payload: InvoiceForm): Promise<Invoice> {
-  const res = await axios.put(`${BASE_URL}/invoice/${id}`, payload)
+  const res = await axios.put(`${BASE_URL}/invoices/${id}`, payload)
   return res.data.data
 }
 
 export async function deleteInvoiceAPI(id: number): Promise<void> {
-  await axios.delete(`${BASE_URL}/invoice/${id}`)
+  await axios.delete(`${BASE_URL}/invoices/${id}`)
 }
 

@@ -6,16 +6,11 @@ import InvoiceDetail from '../pages/InvoiceDetail.vue'
 import ScaleDetail from '../pages/ScaleDetail.vue'
 import ItemCategoryPage from '../pages/ItemCategoryPage.vue'
 import ItemPage from '../pages/ItemPage.vue'
-import Login from '../pages/Login.vue'
+// import Login from '../pages/Login.vue'
 import { useAuthStore } from '../stores/auth'
 
 const routes = [
-  { path: '/login', component: Login },
-  {
-    path: '/',
-    component: Dashboard,
-    meta: { requiresAuth: true },
-  },
+  // { path: '/login', component: Login },
   { path: '/', name: 'Dashboard', component: Dashboard },
   { path: '/invoices', name: 'InvoiceList', component: InvoiceList },
   { path: '/invoice/:id/scales', name: 'ScaleDetail', component: ScaleDetail },

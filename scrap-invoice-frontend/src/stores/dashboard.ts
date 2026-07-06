@@ -12,8 +12,8 @@ export const useDashboardStore = defineStore('dashboard', {
     async fetchDashboardCounts() {
       try {
         const [invoiceRes, customerRes] = await Promise.all([
-          axios.get('/invoices/count'),
-          axios.get('/customers/count'),
+          axios.get('http://localhost:8080/api/dashboard/invoices/count'),
+          axios.get('http://localhost:8080/api/dashboard/customers/count'),
         ])
         this.invoiceCount = invoiceRes.data.count
         this.customerCount = customerRes.data.count

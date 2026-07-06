@@ -15,15 +15,15 @@ func RegisterRoutes(r *gin.Engine) {
 
 	// === PROTECTED ROUTES (Wajib Login) ===
 	protected := api.Group("")
-	protected.Use(middleware.AuthMiddleware()) // <-- Semua route di bawah ini butuh login
+	protected.Use(middleware.AuthMiddleware())
 	{
-		// Invoice
+		// Invoice - SEMUA ROLE BISA AKSES (Admin, Staff, Operator)
 		invoices := protected.Group("/invoices")
 		{
 			invoices.GET("", controllers.GetInvoices)
 			invoices.GET("/:id", controllers.GetInvoiceByID)
 			invoices.POST("", controllers.CreateInvoice)
-			invoices.PUT("/:id", controllers.UpdateInvoice)
+			// invoices.PUT("/:id", controllers.UpdateInvoice)
 			invoices.DELETE("/:id", controllers.DeleteInvoice)
 
 			invoices.GET("/:id/scales", controllers.GetScaleDetailsByInvoiceID)
@@ -35,7 +35,7 @@ func RegisterRoutes(r *gin.Engine) {
 			invoices.GET("/:id/print", controllers.GetInvoicePDF)
 		}
 
-		// Customers
+		// Customers - SEMUA ROLE BISA AKSES
 		customers := protected.Group("/customers")
 		{
 			customers.GET("", controllers.GetCustomers)
@@ -44,7 +44,7 @@ func RegisterRoutes(r *gin.Engine) {
 			customers.DELETE("/:id", controllers.DeleteCustomer)
 		}
 
-		// Categories
+		// Categories - SEMUA ROLE BISA AKSES
 		categories := protected.Group("/categories")
 		{
 			categories.GET("", controllers.GetCategories)
@@ -53,7 +53,7 @@ func RegisterRoutes(r *gin.Engine) {
 			categories.DELETE("/:id", controllers.DeleteCategory)
 		}
 
-		// Items
+		// Items - SEMUA ROLE BISA AKSES
 		items := protected.Group("/items")
 		{
 			items.GET("", controllers.GetItems)
@@ -62,8 +62,9 @@ func RegisterRoutes(r *gin.Engine) {
 			items.DELETE("/:id", controllers.DeleteItem)
 		}
 
-		// Dashboard stats
+		// Dashboard - HANYA Staff & Operator (Admin TIDAK BISA)
 		dashboard := protected.Group("/dashboard")
+		dashboard.Use(middleware.RoleMiddleware()) // <-- Role restriction
 		{
 			dashboard.GET("/invoices/count", controllers.GetInvoiceCount)
 			dashboard.GET("/customers/count", controllers.GetCustomerCount)

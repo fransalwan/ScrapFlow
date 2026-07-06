@@ -6,29 +6,23 @@ import (
 )
 
 type InvoiceInput struct {
-	CustomerID    int     `json:"customer_id" binding:"required"`
-	InvoiceDate   string  `json:"invoice_date" binding:"required"`
-	Status        *string `json:"status"`
-	PaymentMethod *string `json:"payment_method"`
-	Note          *string `json:"note"`
+	CustomerID    int    `json:"customer_id" binding:"required"`
+	InvoiceDate   string `json:"invoice_date" binding:"required"` // ← HARUS ADA
+	Status        string `json:"status"`
+	PaymentMethod string `json:"payment_method"`
+	Note          string `json:"note"`
 }
 
-func (i *InvoiceInput) ToModel(createdAt time.Time, invoiceDate time.Time, invoiceNumber string) models.Invoice {
-	invoice := models.Invoice{
-		CustomerID:    i.CustomerID,
+func (input InvoiceInput) ToModel(now time.Time, invoiceDate time.Time, invoiceNumber string) models.Invoice {
+	return models.Invoice{
+		CustomerID:    input.CustomerID,
 		InvoiceNumber: invoiceNumber,
-		CreatedAt:     createdAt, // ← from time.Now()
 		InvoiceDate:   invoiceDate,
-		Status:        "draft",
+		Status:        input.Status,
+		PaymentMethod: input.PaymentMethod,
+		Note:          input.Note,
+		TotalWeight:   0, // Default
+		TotalPrice:    0, // Default
+		CreatedAt:     now,
 	}
-	if i.Status != nil {
-		invoice.Status = *i.Status
-	}
-	if i.PaymentMethod != nil {
-		invoice.PaymentMethod = *i.PaymentMethod
-	}
-	if i.Note != nil {
-		invoice.Note = *i.Note
-	}
-	return invoice
 }

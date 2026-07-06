@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"scrap-invoice-backend/config"
 	"scrap-invoice-backend/dto"
@@ -51,32 +54,55 @@ func GetInvoiceByID(c *gin.Context) {
 }
 
 func CreateInvoice(c *gin.Context) {
+	// DEBUG: Log raw request body
+	bodyBytes, _ := io.ReadAll(c.Request.Body)
+	log.Printf("📦 Raw request body: %s", string(bodyBytes))
+
+	// Reset body buat binding
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
 	// 1. Bind input dari frontend
 	var input dto.InvoiceInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON: " + err.Error()})
+		log.Printf("❌ Bind error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":         "Invalid JSON: " + err.Error(),
+			"received_body": string(bodyBytes),
+		})
 		return
 	}
 
-	// 2. Parse invoice_date dari FE
+	log.Printf("✅ Parsed input: %+v", input)
+
+	// 2. Validasi & parse invoice_date (WAJIB untuk create)
+	if input.InvoiceDate == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invoice_date is required for creating invoice",
+		})
+		return
+	}
+
 	parsedInvoiceDate, err := time.Parse("2006-01-02", input.InvoiceDate)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid invoice_date format. Use YYYY-MM-DD"})
+		log.Printf("❌ Date parse error: %v (received: %s)", err, input.InvoiceDate)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":           "Invalid invoice_date format. Use YYYY-MM-DD",
+			"received":        input.InvoiceDate,
+			"expected_format": "YYYY-MM-DD",
+		})
 		return
 	}
 
 	// 3. Gunakan waktu sekarang sebagai created_at
 	now := time.Now()
 
-	// 4. Hitung jumlah invoice di tanggal yang sama (created_at)
-	today := now.Format("2006-01-02")
+	// 4. Hitung jumlah invoice di tanggal invoice_date (bukan created_at)
 	var count int64
 	config.DB.Model(&models.Invoice{}).
-		Where("DATE(created_at) = ?", today).
+		Where("DATE(invoice_date) = ?", parsedInvoiceDate.Format("2006-01-02")).
 		Count(&count)
 
-	// 5. Generate nomor invoice dari invoice_date (boleh juga dari now)
+	// 5. Generate nomor invoice
 	newNumber := fmt.Sprintf("INV-%s-%04d", parsedInvoiceDate.Format("20060102"), count+1)
 
 	// 6. Bangun model invoice dari input DTO
@@ -84,13 +110,14 @@ func CreateInvoice(c *gin.Context) {
 
 	// 7. Simpan ke database
 	if err := config.DB.Create(&invoice).Error; err != nil {
+		log.Printf("❌ Create error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create invoice: " + err.Error()})
 		return
 	}
 
-	// 8. Ambil ulang data lengkap (dengan relasi)
+	// 8. Ambil ulang data lengkap dengan relasi
 	var fullInvoice models.Invoice
-	if err := config.DB.Preload("Customer").First(&fullInvoice, invoice.ID).Error; err != nil {
+	if err := config.DB.Preload("Customer").First(&fullInvoice, invoice.CustomerID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load customer data: " + err.Error()})
 		return
 	}
@@ -99,67 +126,6 @@ func CreateInvoice(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Invoice created successfully",
 		"data":    fullInvoice,
-	})
-}
-
-func UpdateInvoice(c *gin.Context) {
-	// 1. Ambil ID dari parameter
-	id := c.Param("id")
-
-	// 2. Ambil data invoice dari database
-	var invoice models.Invoice
-	if err := config.DB.First(&invoice, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
-		return
-	}
-
-	// 3. Bind input dari frontend ke DTO
-	var input dto.InvoiceInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON: " + err.Error()})
-		return
-	}
-
-	// 4. Siapkan map untuk fields yang akan diupdate
-	updates := map[string]interface{}{
-		"customer_id": input.CustomerID,
-	}
-
-	// 5. Handle optional fields
-	if input.Status != nil {
-		updates["status"] = *input.Status
-	}
-	if input.PaymentMethod != nil {
-		updates["payment_method"] = *input.PaymentMethod
-	}
-	if input.Note != nil {
-		updates["note"] = *input.Note
-	}
-	if input.InvoiceDate != "" {
-		parsedInvoiceDate, err := time.Parse("2006-01-02", input.InvoiceDate)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid invoice_date format. Use YYYY-MM-DD"})
-			return
-		}
-		updates["invoice_date"] = parsedInvoiceDate
-	}
-
-	// 6. Jalankan update ke database
-	if err := config.DB.Model(&invoice).Updates(updates).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update invoice: " + err.Error()})
-		return
-	}
-
-	// 7. Ambil ulang invoice + preload relasi
-	if err := config.DB.Preload("Customer").First(&invoice, invoice.ID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load updated invoice"})
-		return
-	}
-
-	// 8. Kirim response
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Invoice updated successfully",
-		"data":    invoice,
 	})
 }
 

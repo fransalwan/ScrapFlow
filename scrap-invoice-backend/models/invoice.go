@@ -10,7 +10,7 @@ type Invoice struct {
 	TotalPrice    float64 `gorm:"column:total_price" json:"total_price"`
 	PaymentMethod string  `gorm:"column:payment_method" json:"payment_method"`
 	Note          string  `gorm:"column:note" json:"note"`
-	Status        string  `gorm:"column:status" json:"status"`
+	Status        string  `gorm:"default:'draft'" json:"status"`
 	CreatedBy     string  `gorm:"column:created_by" json:"created_by"`
 
 	// Field baru

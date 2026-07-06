@@ -23,18 +23,19 @@ func main() {
 	resetDB := flag.Bool("reset", false, "Reset database (drop all tables)")
 	flag.Parse()
 
-	config.ConnectDB()
-
-	// Kalau ada flag --reset, drop semua tabel
+	// Kalau ada flag --reset, drop semua tabel dengan urutan yang bener
 	if *resetDB {
 		log.Println("🔄 Resetting database...")
-		config.DB.Migrator().DropTable("scale_detail")
-		config.DB.Migrator().DropTable("summary")
+
+		// Drop child tables dulu (yang punya foreign key)
+		config.DB.Migrator().DropTable("scale_details")
+		config.DB.Migrator().DropTable("summaries")
 		config.DB.Migrator().DropTable("invoices")
-		config.DB.Migrator().DropTable("item")
-		config.DB.Migrator().DropTable("item_category")
-		config.DB.Migrator().DropTable("customer")
+		config.DB.Migrator().DropTable("items")
+		config.DB.Migrator().DropTable("item_categories")
+		config.DB.Migrator().DropTable("customers")
 		config.DB.Migrator().DropTable("users")
+
 		log.Println("✅ All tables dropped")
 	}
 
@@ -56,10 +57,10 @@ func main() {
 	// Seed
 	seeders.SeedData()
 
-	r := gin.Default() // coba dulu pake default dulu biar simple
+	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // Boleh diganti nanti kalau production
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -67,7 +68,6 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// Logging tambahan kalau mau
 	r.Use(func(c *gin.Context) {
 		log.Printf("REQ: %s %s", c.Request.Method, c.Request.URL.Path)
 		c.Next()

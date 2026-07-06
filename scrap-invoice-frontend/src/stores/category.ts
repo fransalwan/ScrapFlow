@@ -1,34 +1,76 @@
-// stores/category.ts
+// src/stores/category.ts
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { ref } from 'vue'
+import api from '../services/api'
 
-import type { Category } from '../types/category'
+// Type Category - di-export biar bisa dipake di komponen
+export interface Category {
+  id: number
+  item_category_name: string
+  created_at?: string
+  updated_at?: string
+}
 
+export const useCategoryStore = defineStore('category', () => {
+  // State
+  const categories = ref<Category[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-export const useCategoryStore = defineStore('category', {
-  state: () => ({
-    categories: [] as Category[],
-  }),
-  actions: {
-    async fetchCategories() {
-      const res = await axios.get('http://localhost:8080/api/categories')
-      this.categories = res.data.data
-    },
+  // Actions
+  const fetchCategories = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      const res = await api.get('/categories')
+      // Handle response dari backend (biasanya format { data: [...] })
+      categories.value = res.data.data || res.data || []
+    } catch (err: any) {
+      console.error('Fetch categories failed:', err)
+      error.value = err.response?.data?.error || 'Failed to fetch categories'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
 
-    async createCategory(data: { item_category_name: string }) {
-      const res = await axios.post('http://localhost:8080/api/category', data)
-      this.categories.push(res.data.data)
-    },
+  const createCategory = async (payload: { item_category_name: string }) => {
+    try {
+      const res = await api.post('/categories', payload)
+      return res.data
+    } catch (err: any) {
+      console.error('Create category failed:', err)
+      throw err
+    }
+  }
 
-    async updateCategory(id: number, data: { item_category_name: string }) {
-      const res = await axios.put(`http://localhost:8080/api/category/${id}`, data)
-      const idx = this.categories.findIndex((c) => c.id === id)
-      if (idx !== -1) this.categories[idx] = res.data.data
-    },
+  const updateCategory = async (id: number, payload: { item_category_name: string }) => {
+    try {
+      const res = await api.put(`/categories/${id}`, payload)
+      return res.data
+    } catch (err: any) {
+      console.error('Update category failed:', err)
+      throw err
+    }
+  }
 
-    async deleteCategory(id: number) {
-      await axios.delete(`http://localhost:8080/api/category/${id}`)
-      this.categories = this.categories.filter((c) => c.id !== id)
-    },
-  },
+  const deleteCategory = async (id: number) => {
+    try {
+      const res = await api.delete(`/categories/${id}`)
+      return res.data
+    } catch (err: any) {
+      console.error('Delete category failed:', err)
+      throw err
+    }
+  }
+
+  return {
+    categories,
+    loading,
+    error,
+    fetchCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+  }
 })

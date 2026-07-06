@@ -1,34 +1,64 @@
 import { defineStore } from 'pinia'
-import axios from '../lib/axios'
+import { ref, computed } from 'vue'
+import { authService } from '../services/authService'
+import type { User, LoginRequest } from '../types/user'
 
-export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    token: localStorage.getItem('token') || '',
-    user: null as null | { username: string },
-  }),
+export const useAuthStore = defineStore('auth', () => {
+  const token = ref<string | null>(localStorage.getItem('token'))
+  const user = ref<User | null>(
+    localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null
+  )
 
-  getters: {
-    isLoggedIn: (state) => !!state.token,
-  },
+  const isLoggedIn = computed(() => !!token.value)
+  const currentUser = computed(() => user.value)
+  const userRole = computed(() => user.value?.role || '')
+  const isAdmin = computed(() => user.value?.role === 'admin')
 
-  actions: {
-    async login({ username, password }: { username: string; password: string }) {
-      try {
-        const res = await axios.post('http://localhost:8080/api/login', { username, password })
-        this.token = res.data.token
-        this.user = { username }
-        localStorage.setItem('token', this.token)
-        return true
-      } catch (err) {
-        console.error('Login failed:', err)
-        return false
+  const login = async (email: string, password: string) => {
+    try {
+      console.log('🔐 Attempting login for:', email)
+      
+      const credentials: LoginRequest = { email, password }
+      const response = await authService.login(credentials)
+      
+      console.log('✅ Login response:', response)
+      
+      // Simpan ke localStorage
+      localStorage.setItem('token', response.token)
+      localStorage.setItem('user', JSON.stringify(response.user))
+      
+      // Update state
+      token.value = response.token
+      user.value = response.user
+      
+      console.log('💾 Token saved to localStorage:', response.token.substring(0, 20) + '...')
+      
+      return { success: true }
+    } catch (error: any) {
+      console.error('❌ Login failed:', error.response?.data)
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Login failed' 
       }
-    },
+    }
+  }
 
-    logout() {
-      this.token = ''
-      this.user = null
-      localStorage.removeItem('token')
-    },
-  },
+  const logout = () => {
+    console.log('🚪 Logging out...')
+    token.value = null
+    user.value = null
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+
+  return {
+    token,
+    user,
+    isLoggedIn,
+    currentUser,
+    userRole,
+    isAdmin,
+    login,
+    logout,
+  }
 })

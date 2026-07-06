@@ -1,20 +1,29 @@
-import type { Customer } from './customer'
-
+// src/types/invoice.ts
 export interface Invoice {
-  id: number
+  invoice_id: number
   invoice_number: string
-  customer: Pick<Customer, 'id' | 'name'>
-  invoice_date: string                      // tanggal invoice (visible di UI)
-  created_at: string                        // tanggal buat invoice (opsional di UI, penting di logic)
-  status: 'draft' | 'paid' | 'unpaid' | 'finalized'
-  payment_method?: string
-  note?: string
+  customer_id: number
+  invoice_date?: string
+  status?: 'draft' | 'paid' | 'unpaid' | 'finalized'
+  total_weight: number
+  total_price: number
+  payment_method: string
+  note: string
+  created_at: string
+  customer?: {
+    id_customer: number
+    name: string
+    phone?: string
+    email?: string
+    address?: string
+    tier?: string
+  }
 }
 
 export interface InvoiceForm {
   customer_id: number
-  invoice_date: string         // ← dikirim ke backend sebagai invoice_date
-  status?: 'draft' | 'paid' | 'unpaid' | 'finalized'
+  invoice_date: string // ← WAJIB ADA
+  status?: 'draft' | 'paid' | 'unpaid' | 'finalized' // ← TAMBAHIN
   payment_method?: string
   note?: string
 }

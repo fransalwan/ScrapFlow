@@ -1,2 +1,53 @@
+# ==========================================
+# Environment Variables (SENSITIVE)
+# ==========================================
 .env
+.env.local
+.env.*.local
+
+# ==========================================
+# Custom Project Files
+# ==========================================
 db_schema.png
+*.log
+tmp/
+temp/
+
+# ==========================================
+# Go Build Artifacts
+# ==========================================
+# Executable
+main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# ==========================================
+# Go Dependencies
+# ==========================================
+# Vendor directory (biar nggak ke-commit, kecuali lu memang pakai vendor)
+vendor/
+
+# ==========================================
+# IDE & Editor Files
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# Docker
+# ==========================================
+docker-compose.override.yml

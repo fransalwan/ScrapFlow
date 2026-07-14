@@ -4,6 +4,7 @@ import { ref } from 'vue'
 import api from '../services/api'
 import type { CustomerForm } from '../types/customer'
 
+
 export interface Customer {
   id: number
   name: string

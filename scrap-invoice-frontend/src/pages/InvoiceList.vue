@@ -41,9 +41,9 @@
         <tbody>
           <tr
             v-for="invoice in invoices"
-            :key="invoice.invoice_id"
+            :key="invoice.id"
             class="hover:bg-gray-50 cursor-pointer"
-            @click="goToScaleDetail(invoice.invoice_id)"
+            @click="goToScaleDetail(invoice.id)"
           >
             <td class="px-4 py-3 font-mono">{{ invoice.invoice_number }}</td>
             <td class="px-4 py-3">{{ invoice.customer?.name || '-' }}</td>
@@ -58,7 +58,7 @@
                 Edit
               </button>
               <button
-                @click.stop="deleteInvoice(invoice.invoice_id)"
+                @click.stop="deleteInvoice(invoice.id)"
                 class="text-red-600 hover:underline"
               >
                 Delete
@@ -189,9 +189,9 @@ const form = ref<InvoiceForm>({
   note: '',
 })
 
-onMounted(async () => {
-  await invoiceStore.fetchInvoices()
-  await customerStore.fetchCustomers()
+onMounted(() => {
+   invoiceStore.fetchInvoices()
+   customerStore.fetchCustomers()
 })
 
 function goToScaleDetail(id: number) {
@@ -218,7 +218,8 @@ function openModal(mode: 'create' | 'edit', invoice?: Invoice) {
   isEditing.value = mode === 'edit'
 
   if (mode === 'edit' && invoice) {
-    editingId.value = invoice.invoice_id
+    editingId.value = invoice.id
+    console.log("Editing invoice:", invoice)
     form.value = {
       customer_id: invoice.customer_id,
       invoice_date: invoice.invoice_date?.slice(0, 10) || invoice.created_at.slice(0, 10),
@@ -260,14 +261,18 @@ async function saveInvoice() {
 }
 
 async function deleteInvoice(id: number) {
-  if (confirm('Yakin mau hapus invoice ini?')) {
+  try {
+    toast.success('Deleting invoice...')
     await invoiceStore.deleteInvoice(id)
+    await invoiceStore.fetchInvoices() 
+  } catch (err) {
+    toast.error('Failed to delete invoice')
   }
 }
 
 function resetForm() {
   form.value = {
-    customer_id: 0, // ← Ganti 0 jadi null biar dropdown default ke "Pilih customer"
+    customer_id: 0, 
     invoice_date: new Date().toISOString().slice(0, 10),
     status: 'draft',
     payment_method: '',

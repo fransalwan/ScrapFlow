@@ -1,6 +1,6 @@
 // src/types/invoice.ts
 export interface Invoice {
-  invoice_id: number
+  id: number
   invoice_number: string
   customer_id: number
   invoice_date?: string

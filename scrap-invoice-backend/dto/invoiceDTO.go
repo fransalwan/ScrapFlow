@@ -7,7 +7,7 @@ import (
 
 type InvoiceInput struct {
 	CustomerID    int    `json:"customer_id" binding:"required"`
-	InvoiceDate   string `json:"invoice_date" binding:"required"` // ← HARUS ADA
+	InvoiceDate   string `json:"invoice_date"`
 	Status        string `json:"status"`
 	PaymentMethod string `json:"payment_method"`
 	Note          string `json:"note"`

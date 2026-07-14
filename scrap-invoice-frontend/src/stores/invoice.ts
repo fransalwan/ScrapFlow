@@ -16,6 +16,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
     error.value = null
     try {
       const res = await api.get('/invoices')
+      console.log("Fetched invoices:", res.data.data) // Debug log
       // Ambil data dari response backend, tanpa dummy data
       invoices.value = res.data.data || res.data || []
     } catch (err: any) {
@@ -50,7 +51,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
       const updated = res.data.data || res.data
       
       // Update di array
-      const idx = invoices.value.findIndex((inv) => inv.invoice_id === id)
+      const idx = invoices.value.findIndex((inv) => inv.id === id)
       if (idx !== -1) {
         invoices.value[idx] = updated
       }
@@ -62,10 +63,10 @@ export const useInvoiceStore = defineStore('invoice', () => {
   }
 
   const deleteInvoice = async (id: number) => {
+    console.log("Deleting invoice with ID:", id)
     try {
       await api.delete(`/invoices/${id}`)
-      // Hapus dari array
-      invoices.value = invoices.value.filter((inv) => inv.invoice_id !== id)
+      invoices.value = invoices.value.filter((inv) => inv.id !== id)
     } catch (err: any) {
       console.error(`Failed to delete invoice with id ${id}:`, err)
       throw err

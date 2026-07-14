@@ -81,7 +81,7 @@ async function deleteCustomer(id: number) {
   try {
     await customerStore.deleteCustomer(id)
     toast.success('Customer deleted!')
-    await customerStore.fetchCustomers() // buat refresh list setelah delete
+    await customerStore.fetchCustomers() 
   } catch (err) {
     toast.error('Failed to delete customer')
     console.error('Failed to delete customer:', err)

@@ -23,16 +23,16 @@ func RegisterRoutes(r *gin.Engine) {
 			invoices.GET("", controllers.GetInvoices)
 			invoices.GET("/:id", controllers.GetInvoiceByID)
 			invoices.POST("", controllers.CreateInvoice)
-			// invoices.PUT("/:id", controllers.UpdateInvoice)
-			invoices.DELETE("/:id", controllers.DeleteInvoice)
+			invoices.PUT("/:invoice_id", controllers.UpdateInvoice)
+			invoices.DELETE("/:invoice_id", controllers.DeleteInvoice)
 
-			invoices.GET("/:id/scales", controllers.GetScaleDetailsByInvoiceID)
-			invoices.POST("/:id/scales", controllers.CreateScaleDetail)
-			invoices.PUT("/:id/scales", controllers.UpdateScaleDetail)
-			invoices.DELETE("/:id/scales", controllers.DeleteScaleDetail)
+			// invoices.GET("/:id/scales", controllers.GetScaleDetailsByInvoiceID)
+			// invoices.POST("/:id/scales", controllers.CreateScaleDetail)
+			// invoices.PUT("/:id/scales", controllers.UpdateScaleDetail)
+			// invoices.DELETE("/:id/scales", controllers.DeleteScaleDetail)
 
-			invoices.GET("/:id/summary", controllers.GetScaleSummaryByInvoice)
-			invoices.GET("/:id/print", controllers.GetInvoicePDF)
+			// invoices.GET("/:id/summary", controllers.GetScaleSummaryByInvoice)
+			// invoices.GET("/:id/print", controllers.GetInvoicePDF)
 		}
 
 		// Customers - SEMUA ROLE BISA AKSES

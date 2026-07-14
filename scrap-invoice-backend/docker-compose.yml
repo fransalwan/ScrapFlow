@@ -28,7 +28,7 @@ services:
     environment:
       # ⚠️ PENTING: DB_HOST diganti jadi 'db' (nama service di atas), BUKAN 'localhost'
       - DB_HOST=db
-      - DB_PORT=5432
+      - DB_PORT=5433
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=scrapFlow_db

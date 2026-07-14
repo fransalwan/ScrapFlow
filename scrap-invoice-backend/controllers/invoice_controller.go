@@ -54,6 +54,7 @@ func GetInvoiceByID(c *gin.Context) {
 }
 
 func CreateInvoice(c *gin.Context) {
+	fmt.Println("Hit CreateInvoice!!!!!!!!!!!!")
 	// DEBUG: Log raw request body
 	bodyBytes, _ := io.ReadAll(c.Request.Body)
 	log.Printf("📦 Raw request body: %s", string(bodyBytes))

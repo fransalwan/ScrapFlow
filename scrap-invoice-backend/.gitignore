@@ -45,7 +45,7 @@ vendor/
 *.swo
 *~
 .DS_Store
-Thumbs.db
+Thumbs.dbdocker-compose logs -f api
 
 # ==========================================
 # Docker

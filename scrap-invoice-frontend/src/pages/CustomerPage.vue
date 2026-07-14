@@ -7,13 +7,12 @@ import { useCustomerStore } from '../stores/customer'
 import { useToast } from 'vue-toastification'
 
 const toast = useToast()
-
-
-const store = useCustomerStore()
+const customerStore = useCustomerStore()
 
 const modalOpen = ref(false)
 const isEditing = ref(false)
 const editingId = ref<number | null>(null)
+const isSubmitting = ref(false)
 
 const form = ref<Omit<Customer, 'id'>>({
   name: '',
@@ -23,46 +22,66 @@ const form = ref<Omit<Customer, 'id'>>({
   tier: 'silver',
 })
 
-onMounted(() => {
-  store.fetchCustomers()
+onMounted(async () => {
+  await customerStore.fetchCustomers()
 })
 
 
-function openModal(mode: 'create' | 'edit', customer?: Customer) {
+function openModal(mode: 'create' | 'edit', customer?: Customer | undefined) {
   modalOpen.value = true
   isEditing.value = mode === 'edit'
+
   if (mode === 'edit' && customer) {
     editingId.value = customer.id
-    form.value = { ...customer }
+    form.value = { 
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email,
+      address: customer.address,
+      tier: customer.tier,
+     }
   } else {
     resetForm()
   }
 }
 
 async function saveCustomer() {
+  isSubmitting.value = true
+
   try {
+    const payload = {
+      name: form.value.name,
+      phone: form.value.phone,
+      email: form.value.email,
+      address: form.value.address,
+      tier: form.value.tier,
+    }
+
     if (isEditing.value && editingId.value !== null) {
-      await store.updateCustomer(editingId.value, form.value)
+      await customerStore.updateCustomer(editingId.value, payload)
       toast.success('Customer updated!')
     } else {
-      await store.createCustomer(form.value)
+      await customerStore.createCustomer(payload)
       toast.success('Customer created!')
     }
 
-    await store.fetchCustomers()
+    await customerStore.fetchCustomers()
+
     resetModal()
   } catch (err) {
     toast.error('Failed to save customer')
     console.error('Failed to save customer:', err)
+  } finally {
+    isSubmitting.value = false
   }
 }
 
 
 async function deleteCustomer(id: number) {
   try {
-    await store.deleteCustomer(id)
+    await customerStore.deleteCustomer(id)
     toast.success('Customer deleted!')
-    await store.fetchCustomers() // buat refresh list setelah delete
+    await customerStore.fetchCustomers() // buat refresh list setelah delete
   } catch (err) {
     toast.error('Failed to delete customer')
     console.error('Failed to delete customer:', err)
@@ -114,7 +133,7 @@ function resetModal() {
         </thead>
         <tbody>
           <tr
-  v-for="customer in store.customers"
+  v-for="customer in customerStore.customers"
   :key="customer.id"
   class="border-b hover:bg-gray-50"
 >
@@ -125,8 +144,8 @@ function resetModal() {
             <td class="px-4 py-3">{{ customer.tier }}</td>
             <td class="px-4 py-3 space-x-2">
               <button
-                class="text-blue-600 hover:underline"
-                @click="openModal('edit', customer)"
+              class="text-blue-600 hover:underline"
+              @click="openModal('edit', customer as Customer)"
               >
                 Edit
               </button>

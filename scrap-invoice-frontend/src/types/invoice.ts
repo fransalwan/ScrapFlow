@@ -22,8 +22,8 @@ export interface Invoice {
 
 export interface InvoiceForm {
   customer_id: number
-  invoice_date: string // ← WAJIB ADA
-  status?: 'draft' | 'paid' | 'unpaid' | 'finalized' // ← TAMBAHIN
+  invoice_date: string
+  status?: 'draft' | 'paid' | 'unpaid' | 'finalized'
   payment_method?: string
   note?: string
 }

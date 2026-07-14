@@ -82,16 +82,17 @@
           <div class="mb-4">
             <label class="block mb-1">Customer</label>
               <select
-  v-model="form.customer_id"
-  class="w-full border rounded px-3 py-2"
-  required
-  @change="console.log('✅ Customer ID terpilih:', form.customer_id)"
->
-  <option disabled :value="null">Pilih customer</option>
+                v-model="form.customer_id"
+                class="w-full border rounded px-3 py-2"
+                required
+                >
+              <option disabled :value="1">Pilih customer</option>
+  
+  <!-- ✅ FLEXIBLE: Coba customer_id, kalau nggak ada pakai id -->
   <option
     v-for="customer in customers"
-    :key="customer.id_customer"
-    :value="customer.id_customer"
+    :key="customer.id"
+    :value="customer.id"
   >
     {{ customer.name }}
   </option>
@@ -156,8 +157,8 @@
     </div>
   </MainLayout>
 </template>
-
 <script setup lang="ts">
+
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -165,7 +166,9 @@ import { useInvoiceStore } from '../stores/invoice'
 import { useCustomerStore } from '../stores/customer'
 import type { InvoiceForm, Invoice } from '../types/invoice'
 import MainLayout from '../layouts/MainLayout.vue'
+import { useToast } from 'vue-toastification'
 
+const toast = useToast()
 const router = useRouter()
 const invoiceStore = useInvoiceStore()
 const customerStore = useCustomerStore()
@@ -178,7 +181,6 @@ const isEditing = ref(false)
 const editingId = ref<number | null>(null)
 const isSubmitting = ref(false)
 
-// ✅ FIX: Tambahin invoice_date dan status dengan default value
 const form = ref<InvoiceForm>({
   customer_id: 0,
   invoice_date: new Date().toISOString().slice(0, 10), // ← Default hari ini
@@ -218,7 +220,7 @@ function openModal(mode: 'create' | 'edit', invoice?: Invoice) {
   if (mode === 'edit' && invoice) {
     editingId.value = invoice.invoice_id
     form.value = {
-      customer_id: invoice.customer_id, // Harus number
+      customer_id: invoice.customer_id,
       invoice_date: invoice.invoice_date?.slice(0, 10) || invoice.created_at.slice(0, 10),
       status: invoice.status || 'draft',
       payment_method: invoice.payment_method ?? '',
@@ -230,35 +232,28 @@ function openModal(mode: 'create' | 'edit', invoice?: Invoice) {
 }
 
 async function saveInvoice() {
-  // ✅ VALIDASI: Pastiin customer_id udah dipilih
-  if (!form.value.customer_id || form.value.customer_id === 0) {
-    alert('Pilih customer dulu!')
-    return
-  }
-
   isSubmitting.value = true
+  
   try {
-    const payload: InvoiceForm = {
-      customer_id: form.value.customer_id,
+    const payload = {
+      customer_id: Number(form.value.customer_id) || 0,
       invoice_date: form.value.invoice_date,
       status: form.value.status || 'draft',
       payment_method: form.value.payment_method || '',
       note: form.value.note || '',
     }
 
-    console.log('📤 Sending payload:', payload)
-    console.log('📤 customer_id type:', typeof payload.customer_id)
-    console.log('📤 customer_id value:', payload.customer_id)
-
     if (isEditing.value && editingId.value !== null) {
       await invoiceStore.updateInvoice(editingId.value, payload)
+      toast.success('Invoice updated!')
     } else {
       await invoiceStore.createInvoice(payload)
+      toast.success('Invoice created!')
     }
 
     resetModal()
   } catch (err) {
-    console.error("Gagal menyimpan invoice:", err)
+    console.error("❌ Gagal menyimpan invoice:", err)
   } finally {
     isSubmitting.value = false
   }
@@ -272,7 +267,7 @@ async function deleteInvoice(id: number) {
 
 function resetForm() {
   form.value = {
-    customer_id: null as any, // ← Ganti 0 jadi null biar dropdown default ke "Pilih customer"
+    customer_id: 0, // ← Ganti 0 jadi null biar dropdown default ke "Pilih customer"
     invoice_date: new Date().toISOString().slice(0, 10),
     status: 'draft',
     payment_method: '',

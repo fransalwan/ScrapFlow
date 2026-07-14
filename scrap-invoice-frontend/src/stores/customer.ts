@@ -2,10 +2,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '../services/api'
+import type { CustomerForm } from '../types/customer'
 
-// Type Customer - di-export biar bisa dipake di komponen
 export interface Customer {
-  id_customer: number
+  id: number
   name: string
   phone: string
   email: string
@@ -13,14 +13,6 @@ export interface Customer {
   tier: string
   created_at?: string
   updated_at?: string
-}
-
-export interface CustomerPayload {
-  name: string
-  phone?: string
-  email?: string
-  address?: string
-  tier?: string
 }
 
 export const useCustomerStore = defineStore('customer', () => {
@@ -46,7 +38,7 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
-  const createCustomer = async (payload: CustomerPayload) => {
+  const createCustomer = async (payload: CustomerForm) => {
     try {
       const res = await api.post('/customers', payload)
       return res.data
@@ -56,7 +48,7 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
-  const updateCustomer = async (id: number, payload: CustomerPayload) => {
+  const updateCustomer = async (id: number, payload: CustomerForm) => {
     try {
       const res = await api.put(`/customers/${id}`, payload)
       return res.data

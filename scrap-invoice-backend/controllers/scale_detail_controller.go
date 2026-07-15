@@ -41,8 +41,8 @@ func GetScaleDetailsByInvoiceID(c *gin.Context) {
 				InvoiceNumber: d.Invoice.InvoiceNumber,
 			},
 			Item: response.ItemInfo{
-				ID:       d.Item.ID,
-				Name:     d.Item.ItemName,
+				ItemID:   d.Item.ID,
+				ItemName: d.Item.ItemName,
 				Category: d.Item.Category.ItemCategoryName,
 			},
 		})
@@ -184,8 +184,8 @@ func UpdateScaleDetail(c *gin.Context) {
 			InvoiceNumber: fullDetail.Invoice.InvoiceNumber,
 		},
 		Item: response.ItemInfo{
-			ID:       fullDetail.Item.ID,
-			Name:     fullDetail.Item.ItemName,
+			ItemID:   fullDetail.Item.ID,
+			ItemName: fullDetail.Item.ItemName,
 			Category: fullDetail.Item.Category.ItemCategoryName,
 		},
 	}

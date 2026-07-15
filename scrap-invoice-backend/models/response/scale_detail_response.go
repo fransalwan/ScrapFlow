@@ -19,7 +19,7 @@ type InvoiceInfo struct {
 }
 
 type ItemInfo struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
+	ItemID   int    `json:"item_id"`
+	ItemName string `json:"item_name"`
 	Category string `json:"category"`
 }

@@ -15,6 +15,7 @@ export async function createScaleDetailAPI(invoiceId: number, payload: ScaleDeta
 
 export async function updateScaleDetailAPI(id: number, payload: any) {
   const res = await axios.put(`${BASE_URL}/invoices/${id}/scales`, payload)
+  console.log('Updated scale detail:', res.data.data)
   return res.data.data
 }
 

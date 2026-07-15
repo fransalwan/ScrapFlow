@@ -2,45 +2,34 @@
 export interface ScaleDetailResponse {
   id: number
   summary_id?: number
-  invoice_id: number
-  item_id: number
+  invoice_id?: number // Opsional, karena di Postman nested di dalam "invoice"
+  item_id?: number    // Opsional, karena di Postman nested di dalam "item"
   weight: number
   alas_weight: number
   photo: string
   scale_type: string
   created_at: string
-  updated_at: string
+  updated_at?: string
+  
+  // ✅ SESUAIKAN DENGAN OUTPUT POSTMAN
   item: {
-    item_id: number
-    item_name: string
-    item_category_id: number
-    price_per_kg: number
-    category?: {
-      item_category_id: number
-      item_category_name: string
-    }
+    id: number             // Bukan item_id
+    name: string           // Bukan item_name
+    category?: string | { item_category_name?: string } // Bisa string langsung atau object
   }
   invoice: {
-    invoice_id: number
+    id: number             // Bukan invoice_id (berdasarkan Postman: "id": 2)
     invoice_number: string
-    customer_id: number
-    total_weight: number
-    total_price: number
-    payment_method: string
-    note: string
-    created_at: string
+    customer_id?: number
+    total_weight?: number
+    total_price?: number
+    payment_method?: string
+    note?: string
+    created_at?: string
   }
 }
 
-export interface ScaleDetailPayload {
-  item_id: number
-  weight: number
-  alas_weight?: number
-  scale_type?: string
-  photo?: string
-}
 
-// Helper type buat UI yang lebih simple
 export interface ScaleDetailUI {
   id: number
   weight: number
@@ -57,4 +46,12 @@ export interface ScaleDetailUI {
     name: string
     category: string
   }
+}
+
+export interface ScaleDetailPayload {
+  item_id: number
+  weight: number
+  alas_weight: number
+  photo: string
+  scale_type: string
 }

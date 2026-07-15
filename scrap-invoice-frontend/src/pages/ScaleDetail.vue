@@ -78,8 +78,8 @@
         <form @submit.prevent="handleSubmitScaleDetail">
           <div class="mb-4">
             <label class="block mb-1">Nama Barang</label>
-            <select v-model="form.item_id" class="w-full border rounded px-3 py-2" required>
-              <option disabled value="">Pilih barang</option>
+            <select v-model.number="form.item_id" class="w-full border rounded px-3 py-2" required>
+              <option disabled :value="null">Pilih barang</option>
               <option v-for="item in itemStore.items" :key="item.id" :value="item.id">
                 {{ item.item_name }}
               </option>
@@ -98,9 +98,8 @@
 
           <div class="mb-4">
             <label class="block mb-1">Photo</label>
-            <input v-model="form.photo" type="text" class="w-full border rounded px-3 py-2" />
+            <input v-model="form.photo" type="text" class="w-full border rounded px-3 py-2" placeholder="URL atau nama file foto" />
           </div>
-
 
           <div class="flex justify-end gap-2">
             <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
@@ -133,7 +132,6 @@ import { useItemStore } from '../stores/items'
 import { useToast } from 'vue-toastification'
 import { Pencil, Trash2 } from 'lucide-vue-next'
 import Swal from 'sweetalert2'
-import type { ScaleDetailResponse } from '../types/scale'
 
 const route = useRoute()
 const invoiceId = Number(route.params.id)
@@ -144,47 +142,55 @@ const toast = useToast()
 const showModal = ref(false)
 const isSubmitting = ref(false)
 const isEdit = ref(false)
-const selectedItem = ref<ScaleDetailResponse | null>(null)
+const selectedItem = ref<any | null>(null)
 const activeFilter = ref<string>('FI')
 
 const form = ref({
-  item_id: null,
-  weight: null,
-  alas_weight: null,
+  item_id: null as number | null,
+  weight: null as number | null,
+  alas_weight: null as number | null,
   photo: '',
   scale_type: '',
 })
 
 const scaleDetails = ref<any[]>([])
 
+// Computed untuk filter
 const filteredScaleDetails = computed(() => {
   return scaleDetails.value.filter(item => item.scale_type === activeFilter.value)
 })
 
-onMounted(() => {
-  scaleStore.fetchScaleDetails(invoiceId)
-  itemStore.fetchItems()
+onMounted(async () => {
+  await scaleStore.fetchScaleDetails(invoiceId)
+  await itemStore.fetchItems()
+  
+  // ✅ CEK DI CONSOLE: Apakah items terisi?
+  console.log('📦 Daftar Item dari ItemStore:', itemStore.items)
 })
 
+// ✅ FIX UTAMA: Mapping disesuaikan dengan output transformToUI di scale.ts store
 watch(
   () => scaleStore.scaleDetails,
   (details) => {
+    console.log('📊 Scale Details dari Store:', details)
+    // Store sudah mereturn array ScaleDetailUI[], jadi kita map langsung
     scaleDetails.value = details.map(d => ({
       id: d.id,
-      item_id: d.item.id,
-      item_name: d.item.name,
+      // Sesuai transformToUI: d.item.id dan d.item.name
+      item_id: d.item.id || null,
+      item_name: d.item.name || 'Unknown Item',
       weight: d.weight,
       alas_weight: d.alas_weight,
       photo: d.photo,
       scale_type: d.scale_type,
     }))
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 
 function openModal() {
   resetForm()
-  form.value.scale_type = activeFilter.value // ✅ force isi tipe berdasarkan filter yang aktif
+  form.value.scale_type = activeFilter.value // force isi tipe berdasarkan filter yang aktif
   showModal.value = true
 }
 
@@ -213,7 +219,7 @@ async function handleSubmitScaleDetail() {
   const { item_id, weight, alas_weight = 0, photo, scale_type } = form.value
 
   if (!item_id || weight == null || weight <= 0 || !scale_type) {
-    toast.error('Barang, berat (>= 0), dan tipe wajib diisi.')
+    toast.error('Barang, berat (> 0), dan tipe wajib diisi.')
     return
   }
 
@@ -243,15 +249,20 @@ async function handleSubmitScaleDetail() {
   }
 }
 
+// ✅ FIX: Mengambil item_id dari hasil mapping yang sudah benar
 function openEditModal(item: any) {
   selectedItem.value = { ...item }
+  
+  console.log('📝 Data item yang mau di-edit:', selectedItem.value)
+  
   form.value = {
-    item_id: item.item_id,
+    item_id: item.item_id,       // Sekarang ini PASTI terisi angka, bukan undefined
     weight: item.weight,
     alas_weight: item.alas_weight,
     photo: item.photo,
     scale_type: item.scale_type,
   }
+  
   isEdit.value = true
   showModal.value = true
 }

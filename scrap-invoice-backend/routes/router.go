@@ -26,9 +26,9 @@ func RegisterRoutes(r *gin.Engine) {
 			invoices.PUT("/:invoice_id", controllers.UpdateInvoice)
 			invoices.DELETE("/:invoice_id", controllers.DeleteInvoice)
 
-			// invoices.GET("/:id/scales", controllers.GetScaleDetailsByInvoiceID)
-			// invoices.POST("/:id/scales", controllers.CreateScaleDetail)
-			// invoices.PUT("/:id/scales", controllers.UpdateScaleDetail)
+			invoices.GET("/:id/scales", controllers.GetScaleDetailsByInvoiceID)
+			invoices.POST("/:id/scales", controllers.CreateScaleDetail)
+			invoices.PUT("/:id/scales", controllers.UpdateScaleDetail)
 			// invoices.DELETE("/:id/scales", controllers.DeleteScaleDetail)
 
 			// invoices.GET("/:id/summary", controllers.GetScaleSummaryByInvoice)

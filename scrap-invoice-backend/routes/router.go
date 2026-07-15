@@ -31,8 +31,8 @@ func RegisterRoutes(r *gin.Engine) {
 			invoices.PUT("/:invoice_id/scales/:scale_id", controllers.UpdateScaleDetail)
 			invoices.DELETE("/:invoice_id/scales/:scale_id", controllers.DeleteScaleDetail)
 
-			// invoices.GET("/:id/summary", controllers.GetScaleSummaryByInvoice)
-			// invoices.GET("/:id/print", controllers.GetInvoicePDF)
+			invoices.GET("/:id/summary", controllers.GetScaleSummaryByInvoice)
+			invoices.GET("/:id/print", controllers.GetInvoicePDF)
 		}
 
 		// Customers - SEMUA ROLE BISA AKSES

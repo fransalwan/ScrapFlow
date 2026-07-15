@@ -2,6 +2,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"scrap-invoice-backend/config"
 	"scrap-invoice-backend/models"
@@ -11,6 +12,10 @@ import (
 
 func GetScaleSummaryByInvoice(c *gin.Context) {
 	invoiceId := c.Param("id")
+
+	// ✅ TAMBAHKAN LOG INI
+	fmt.Printf(" Getting summary for invoice ID: %s\n", invoiceId)
+
 	var scaleDetails []models.ScaleDetail
 
 	if err := config.DB.

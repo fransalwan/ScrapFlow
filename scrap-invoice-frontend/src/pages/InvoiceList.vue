@@ -47,7 +47,7 @@
           >
             <td class="px-4 py-3 font-mono">{{ invoice.invoice_number }}</td>
             <td class="px-4 py-3">{{ invoice.customer?.name || '-' }}</td>
-            <td class="px-4 py-3">{{ formatDateShort(invoice.created_at) }}</td>
+            <td class="px-4 py-3">{{ formatDateShort(invoice.invoice_date || invoice.created_at) }}</td>
             <td class="px-4 py-3">{{ invoice.total_weight }} kg</td>
             <td class="px-4 py-3">{{ formatCurrency(invoice.total_price) }}</td>
             <td class="px-4 py-3 space-x-2">
@@ -86,7 +86,7 @@
                 class="w-full border rounded px-3 py-2"
                 required
                 >
-              <option disabled :value="1">Pilih customer</option>
+              <option disabled :value="0">Pilih customer</option>
   
   <!-- ✅ FLEXIBLE: Coba customer_id, kalau nggak ada pakai id -->
   <option
@@ -198,7 +198,9 @@ function goToScaleDetail(id: number) {
   router.push(`/invoice/${id}/scales`)
 }
 
-function formatDateShort(dateStr: string): string {
+function formatDateShort(dateStr: string | undefined): string {
+  if (!dateStr) return '-' // ✅ Fallback jika tanggal kosong
+  
   return new Date(dateStr).toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'short',

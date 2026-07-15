@@ -134,76 +134,136 @@ func CreateScaleDetail(c *gin.Context) {
 }
 
 func UpdateScaleDetail(c *gin.Context) {
-	fmt.Println("Updating scale detail...", c.Param("id"))
-	id := c.Param("id")
-	var existing models.ScaleDetail
+	// 1. Ambil parameter dari URL
+	invoiceIDParam := c.Param("invoice_id")
+	scaleIDParam := c.Param("scale_id")
 
-	// Cari scale_detail berdasarkan ID
-	if err := config.DB.First(&existing, id).Error; err != nil {
+	// 2. Convert string ke uint (GORM defaultnya uint, kalau model lu int, ganti jadi strconv.Atoi)
+	invoiceID, err := strconv.ParseUint(invoiceIDParam, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid invoice ID format"})
+		return
+	}
+
+	scaleID, err := strconv.ParseUint(scaleIDParam, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scale ID format"})
+		return
+	}
+
+	// 3. Cari data existing berdasarkan scale_id
+	var existing models.ScaleDetail
+	if err := config.DB.First(&existing, scaleID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Scale detail not found"})
 		return
 	}
 
-	// Bind JSON
-	var updated models.ScaleDetail
-	if err := c.ShouldBindJSON(&updated); err != nil {
+	// 4. 🔒 VALIDASI KEPEMILIKAN (Security)
+	// Pastikan scale detail ini benar-benar milik invoice yang diminta di URL
+	if existing.InvoiceID != int(invoiceID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Scale detail does not belong to this invoice"})
+		return
+	}
+
+	// 5. Bind input ke struct lokal (LEBIH AMAN daripada bind ke models.ScaleDetail langsung)
+	// Ini mencegah user jahat mengupdate field terlarang seperti InvoiceID atau CreatedAt
+	var input struct {
+		ItemID     int     `json:"item_id" binding:"required"`
+		Weight     float64 `json:"weight" binding:"required,min=0"` // Ganti ke int jika model lu int
+		AlasWeight float64 `json:"alas_weight"`
+		Photo      string  `json:"photo"`
+		ScaleType  string  `json:"scale_type" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 		return
 	}
 
-	// Update field yang boleh diubah
-	existing.Weight = updated.Weight
-	existing.AlasWeight = updated.AlasWeight
-	existing.Photo = updated.Photo
-	existing.ScaleType = updated.ScaleType
-	existing.ItemID = updated.ItemID
+	// 6. Update hanya field yang diizinkan
+	existing.ItemID = input.ItemID
+	existing.Weight = input.Weight
+	existing.AlasWeight = input.AlasWeight
+	existing.Photo = input.Photo
+	existing.ScaleType = input.ScaleType
 	existing.UpdatedAt = time.Now()
 
+	// 7. Simpan ke database
 	if err := config.DB.Save(&existing).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update scale detail"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update scale detail: " + err.Error()})
 		return
 	}
 
-	// 🔁 Preload ulang untuk keperluan response
+	// 8. Preload ulang untuk keperluan response
 	var fullDetail models.ScaleDetail
-	if err := config.DB.Preload("Item.Category").Preload("Invoice").First(&fullDetail, existing.ID).Error; err != nil {
+	if err := config.DB.
+		Preload("Item").
+		Preload("Item.Category"). // Sesuaikan dengan nama relasi di model lu
+		Preload("Invoice").
+		First(&fullDetail, scaleID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch updated detail"})
 		return
 	}
 
-	// 📦 Map ke response DTO
-	response := response.ScaleDetailResponse{
-		ID:         fullDetail.ID,
-		Weight:     fullDetail.Weight,
-		AlasWeight: fullDetail.AlasWeight,
-		Photo:      fullDetail.Photo,
-		ScaleType:  fullDetail.ScaleType,
-		CreatedAt:  fullDetail.CreatedAt,
-		Invoice: response.InvoiceInfo{
-			ID:            fullDetail.Invoice.ID,
-			InvoiceNumber: fullDetail.Invoice.InvoiceNumber,
+	// 9. Map ke response (DISESUAIKAN dengan format JSON yang frontend harapkan: "id" & "name")
+	// Kita pakai map[string]interface{} biar fleksibel dan nggak perlu ubah struct response yang lama
+	responseData := map[string]interface{}{
+		"id":          fullDetail.ID,
+		"weight":      fullDetail.Weight,
+		"alas_weight": fullDetail.AlasWeight,
+		"photo":       fullDetail.Photo,
+		"scale_type":  fullDetail.ScaleType,
+		"created_at":  fullDetail.CreatedAt,
+		"invoice": map[string]interface{}{
+			"id":             fullDetail.Invoice.ID, // Atau fullDetail.InvoiceID tergantung model
+			"invoice_number": fullDetail.Invoice.InvoiceNumber,
 		},
-		Item: response.ItemInfo{
-			ItemID:   fullDetail.Item.ID,
-			ItemName: fullDetail.Item.ItemName,
-			Category: fullDetail.Item.Category.ItemCategoryName,
+		"item": map[string]interface{}{
+			"id":       fullDetail.Item.ID,                        // ✅ Frontend expect "id"
+			"name":     fullDetail.Item.ItemName,                  // ✅ Frontend expect "name" (sesuaikan dengan field model lu)
+			"category": fullDetail.Item.Category.ItemCategoryName, // Sesuaikan dengan field model lu
 		},
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Scale detail updated successfully", "data": response})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Scale detail updated successfully",
+		"data":    responseData,
+	})
 }
 
 func DeleteScaleDetail(c *gin.Context) {
-	id := c.Param("id")
-	var detail models.ScaleDetail
+	invoiceIDParam := c.Param("invoice_id")
+	scaleIDParam := c.Param("scale_id")
 
-	if err := config.DB.First(&detail, id).Error; err != nil {
+	fmt.Printf("🔍 Menerima request: invoice_id=%s, scale_id=%s\n", invoiceIDParam, scaleIDParam)
+
+	// Convert ke integer
+	scaleID, err := strconv.Atoi(scaleIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scale ID format"})
+		return
+	}
+
+	invoiceID, _ := strconv.Atoi(invoiceIDParam)
+
+	var detail models.ScaleDetail
+	// GORM akan otomatis mencari berdasarkan primary key (scale_detail_id)
+	if err := config.DB.First(&detail, scaleID).Error; err != nil {
+		fmt.Printf("❌ Data tidak ditemukan di DB untuk ID: %d\n", scaleID)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Scale detail not found"})
 		return
 	}
 
+	// Validasi kepemilikan
+	if detail.InvoiceID != invoiceID {
+		fmt.Printf("⚠️ Mismatch: Detail punya invoice_id %d, tapi request minta invoice_id %d\n", detail.InvoiceID, invoiceID)
+		c.JSON(http.StatusForbidden, gin.H{"error": "Scale detail does not belong to this invoice"})
+		return
+	}
+
+	// Hapus data
 	if err := config.DB.Delete(&detail).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete scale detail"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete"})
 		return
 	}
 

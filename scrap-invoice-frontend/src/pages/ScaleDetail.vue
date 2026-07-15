@@ -132,6 +132,7 @@ import { useItemStore } from '../stores/items'
 import { useToast } from 'vue-toastification'
 import { Pencil, Trash2 } from 'lucide-vue-next'
 import Swal from 'sweetalert2'
+import type { ScaleDetailPayload } from '../types/scale'
 
 const route = useRoute()
 const invoiceId = Number(route.params.id)
@@ -215,6 +216,9 @@ function setFilter(type: string) {
   activeFilter.value = type
 }
 
+// Pastikan kamu mengimpor tipenya di bagian atas file:
+// import type { ScaleDetailPayload } from '../types/scale'
+
 async function handleSubmitScaleDetail() {
   const { item_id, weight, alas_weight = 0, photo, scale_type } = form.value
 
@@ -226,13 +230,21 @@ async function handleSubmitScaleDetail() {
   isSubmitting.value = true
 
   try {
-    const payload = { item_id, weight, alas_weight, photo, scale_type }
+    // ✅ FIX: Berikan tipe data eksplisit dan paksa casting ke Number
+    const payload: ScaleDetailPayload = {
+      item_id: Number(item_id),          // Mengubah number|null menjadi number pasti
+      weight: Number(weight),            // Mengubah number|null menjadi number pasti
+      alas_weight: Number(alas_weight || 0), // Fallback ke 0 jika null
+      photo: photo || '',                // Fallback ke string kosong
+      scale_type: scale_type || 'FI',    // Fallback ke string
+    }
 
     if (isEdit.value) {
       const scaleId = selectedItem.value?.id
       if (!scaleId) throw new Error('ID timbangan tidak ditemukan.')
 
-      await scaleStore.updateScaleDetail(scaleId, payload)
+      // Sekarang payload dijamin 100% cocok dengan ScaleDetailPayload
+      await scaleStore.updateScaleDetail(invoiceId, scaleId, payload)
       toast.success('Data timbangan berhasil diperbarui!')
     } else {
       await scaleStore.createScaleDetail(invoiceId, payload)
@@ -246,6 +258,33 @@ async function handleSubmitScaleDetail() {
     toast.error(error?.message || 'Terjadi kesalahan saat menyimpan data.')
   } finally {
     isSubmitting.value = false
+  }
+}
+
+async function handleDeleteScaleDetail(scaleDetailId: number) {
+  const result = await Swal.fire({
+    title: 'Yakin mau hapus data timbangan ini?',
+    text: 'Data yang dihapus tidak bisa dikembalikan.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#aaa',
+    confirmButtonText: 'Ya, hapus',
+    cancelButtonText: 'Batal',
+  })
+
+  if (!result.isConfirmed) return
+
+  try {
+    // ✅ FIX: Kirim invoiceId DAN scaleDetailId
+    await scaleStore.deleteScaleDetail(invoiceId, scaleDetailId)
+    toast.success('Data timbangan berhasil dihapus.')
+    
+    // Refresh data setelah delete
+    await scaleStore.fetchScaleDetails(invoiceId)
+  } catch (error) {
+    console.error('Gagal menghapus scale detail:', error)
+    toast.error('Gagal menghapus data.')
   }
 }
 
@@ -265,29 +304,5 @@ function openEditModal(item: any) {
   
   isEdit.value = true
   showModal.value = true
-}
-
-async function handleDeleteScaleDetail(scaleDetailId: number) {
-  const result = await Swal.fire({
-    title: 'Yakin mau hapus data timbangan ini?',
-    text: 'Data yang dihapus tidak bisa dikembalikan.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#aaa',
-    confirmButtonText: 'Ya, hapus',
-    cancelButtonText: 'Batal',
-  })
-
-  if (!result.isConfirmed) return
-
-  try {
-    await scaleStore.deleteScaleDetail(scaleDetailId)
-    toast.success('Data timbangan berhasil dihapus.')
-    await scaleStore.fetchScaleDetails(invoiceId)
-  } catch (error) {
-    console.error('Gagal menghapus scale detail:', error)
-    toast.error('Gagal menghapus data.')
-  }
 }
 </script>

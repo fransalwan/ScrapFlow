@@ -13,12 +13,13 @@ export async function createScaleDetailAPI(invoiceId: number, payload: ScaleDeta
   return res.data.data
 }
 
-export async function updateScaleDetailAPI(id: number, payload: any) {
-  const res = await axios.put(`${BASE_URL}/invoices/${id}/scales`, payload)
+export async function updateScaleDetailAPI(invoiceId: number, scaleId: number, payload: any) {
+  // ✅ FIX: Tambahkan scaleId di akhir URL
+  const res = await axios.put(`${BASE_URL}/invoices/${invoiceId}/scales/${scaleId}`, payload)
   console.log('Updated scale detail:', res.data.data)
   return res.data.data
 }
 
-export async function deleteScaleDetailAPI(invoiceId: number): Promise<void> {
-  await axios.delete(`${BASE_URL}/invoices/${invoiceId}/scales`)
-}
+export async function deleteScaleDetailAPI(invoiceId: number, scaleId: number): Promise<void> {
+  // ✅ FIX: Tambahkan scaleId di akhir URL
+  await axios.delete(`${BASE_URL}/invoices/${invoiceId}/scales/${scaleId}`)}

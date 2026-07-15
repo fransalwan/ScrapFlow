@@ -10,9 +10,8 @@ export const useScaleStore = defineStore('scale', () => {
   const error = ref<string | null>(null)
   const activeFilter = ref<string | null>(null)
 
-  // ✅ HELPER YANG SUDAH DIPERBAIKI & ANTI-GAGAL
+  // ✅ HELPER YANG SUDAH DIPERBAIKI & ANTI-GAGAL (Tetap sama)
   const transformToUI = (data: any): ScaleDetailUI => {
-    // Ambil category, handle kalau backend kirim string "Besi" atau object { item_category_name: "Besi" }
     const rawCategory = data.item?.category
     const categoryName = typeof rawCategory === 'string' 
       ? rawCategory 
@@ -26,12 +25,10 @@ export const useScaleStore = defineStore('scale', () => {
       scale_type: data.scale_type,
       created_at: data.created_at,
       invoice: {
-        // Fallback: coba invoice.id, kalau tidak ada coba invoice.invoice_id
         id: data.invoice?.id || data.invoice?.invoice_id || 0,
         invoice_number: data.invoice?.invoice_number || '',
       },
       item: {
-        // ✅ PRIORITAS: Baca format Postman (id & name), fallback ke format lama (item_id & item_name)
         id: data.item?.id || data.item?.item_id || 0,
         name: data.item?.name || data.item?.item_name || 'Unknown Item',
         category: categoryName,
@@ -68,29 +65,37 @@ export const useScaleStore = defineStore('scale', () => {
     }
   }
 
-  const deleteScaleDetail = async (id: number) => {
+  // ✅ FIX: Terima 2 parameter (invoiceId & scaleId)
+  const deleteScaleDetail = async (invoiceId: number, scaleId: number) => {
+    console.log(`Attempting to delete scale detail ${scaleId} from invoice ${invoiceId}`)
     try {
-      await api.delete(`/scales/${id}`) // Sesuaikan endpoint jika perlu
-      scaleDetails.value = scaleDetails.value.filter(detail => detail.id !== id)
+      // ✅ URL Nested yang benar
+      await api.delete(`/invoices/${invoiceId}/scales/${scaleId}`)
+      
+      // Hapus dari state lokal
+      scaleDetails.value = scaleDetails.value.filter(detail => detail.id !== scaleId)
     } catch (err: any) {
-      console.error(`Failed to delete scale detail with id ${id}:`, err)
+      console.error(`Failed to delete scale detail with id ${scaleId}:`, err)
       throw err
     }
   }
 
-  const updateScaleDetail = async (id: number, payload: ScaleDetailPayload) => {
+  // ✅ FIX: Terima 3 parameter (invoiceId, scaleId, & payload)
+  const updateScaleDetail = async (invoiceId: number, scaleId: number, payload: ScaleDetailPayload) => {
     try {
-      const res = await api.put(`/scales/${id}`, payload) // Sesuaikan endpoint jika perlu
+      // ✅ URL Nested yang benar
+      const res = await api.put(`/invoices/${invoiceId}/scales/${scaleId}`, payload)
       const updated = res.data.data || res.data
       const transformed = transformToUI(updated)
       
-      const index = scaleDetails.value.findIndex(s => s.id === id)
+      // Update di state lokal
+      const index = scaleDetails.value.findIndex(s => s.id === scaleId)
       if (index !== -1) {
         scaleDetails.value[index] = transformed
       }
       return transformed
     } catch (err: any) {
-      console.error(`Failed to update scale detail with id ${id}:`, err)
+      console.error(`Failed to update scale detail with id ${scaleId}:`, err)
       throw err
     }
   }

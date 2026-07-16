@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -67,7 +66,6 @@ func CreateCustomer(c *gin.Context) {
 
 	// Simpan ke DB
 	if err := config.DB.Create(&customer).Error; err != nil {
-		fmt.Println("Customer data:", customer)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create customer: " + err.Error()})
 		return
 	}

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, ref, nextTick, computed } from 'vue'
+// ✅ FIX: Hapus defineProps dan defineEmits dari import
+import { ref, nextTick, computed } from 'vue'
 
 const props = defineProps<{
   summary: Record<string, any[]>

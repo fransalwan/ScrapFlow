@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 )
 
 func main() {
-	fmt.Println("Starting Scrap Invoice Backend...")
 	config.ConnectDB()
 
 	// Buat flag --reset

@@ -65,9 +65,7 @@ export const useScaleStore = defineStore('scale', () => {
     }
   }
 
-  // ✅ FIX: Terima 2 parameter (invoiceId & scaleId)
   const deleteScaleDetail = async (invoiceId: number, scaleId: number) => {
-    console.log(`Attempting to delete scale detail ${scaleId} from invoice ${invoiceId}`)
     try {
       // ✅ URL Nested yang benar
       await api.delete(`/invoices/${invoiceId}/scales/${scaleId}`)

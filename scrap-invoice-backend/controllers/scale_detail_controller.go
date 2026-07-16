@@ -2,7 +2,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"scrap-invoice-backend/config"
 	"scrap-invoice-backend/dto"
@@ -235,8 +234,6 @@ func DeleteScaleDetail(c *gin.Context) {
 	invoiceIDParam := c.Param("invoice_id")
 	scaleIDParam := c.Param("scale_id")
 
-	fmt.Printf("🔍 Menerima request: invoice_id=%s, scale_id=%s\n", invoiceIDParam, scaleIDParam)
-
 	// Convert ke integer
 	scaleID, err := strconv.Atoi(scaleIDParam)
 	if err != nil {
@@ -249,14 +246,12 @@ func DeleteScaleDetail(c *gin.Context) {
 	var detail models.ScaleDetail
 	// GORM akan otomatis mencari berdasarkan primary key (scale_detail_id)
 	if err := config.DB.First(&detail, scaleID).Error; err != nil {
-		fmt.Printf("❌ Data tidak ditemukan di DB untuk ID: %d\n", scaleID)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Scale detail not found"})
 		return
 	}
 
 	// Validasi kepemilikan
 	if detail.InvoiceID != invoiceID {
-		fmt.Printf("⚠️ Mismatch: Detail punya invoice_id %d, tapi request minta invoice_id %d\n", detail.InvoiceID, invoiceID)
 		c.JSON(http.StatusForbidden, gin.H{"error": "Scale detail does not belong to this invoice"})
 		return
 	}

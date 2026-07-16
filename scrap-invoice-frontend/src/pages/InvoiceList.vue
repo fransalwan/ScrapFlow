@@ -221,7 +221,6 @@ function openModal(mode: 'create' | 'edit', invoice?: Invoice) {
 
   if (mode === 'edit' && invoice) {
     editingId.value = invoice.id
-    console.log("Editing invoice:", invoice)
     form.value = {
       customer_id: invoice.customer_id,
       invoice_date: invoice.invoice_date?.slice(0, 10) || invoice.created_at.slice(0, 10),

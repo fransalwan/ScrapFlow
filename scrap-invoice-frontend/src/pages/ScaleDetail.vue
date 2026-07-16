@@ -165,16 +165,12 @@ onMounted(async () => {
   await scaleStore.fetchScaleDetails(invoiceId)
   await itemStore.fetchItems()
   
-  // ✅ CEK DI CONSOLE: Apakah items terisi?
-  console.log('📦 Daftar Item dari ItemStore:', itemStore.items)
 })
 
 // ✅ FIX UTAMA: Mapping disesuaikan dengan output transformToUI di scale.ts store
 watch(
   () => scaleStore.scaleDetails,
   (details) => {
-    console.log('📊 Scale Details dari Store:', details)
-    // Store sudah mereturn array ScaleDetailUI[], jadi kita map langsung
     scaleDetails.value = details.map(d => ({
       id: d.id,
       // Sesuai transformToUI: d.item.id dan d.item.name
@@ -291,9 +287,6 @@ async function handleDeleteScaleDetail(scaleDetailId: number) {
 // ✅ FIX: Mengambil item_id dari hasil mapping yang sudah benar
 function openEditModal(item: any) {
   selectedItem.value = { ...item }
-  
-  console.log('📝 Data item yang mau di-edit:', selectedItem.value)
-  
   form.value = {
     item_id: item.item_id,       // Sekarang ini PASTI terisi angka, bukan undefined
     weight: item.weight,

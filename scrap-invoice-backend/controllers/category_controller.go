@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -49,8 +48,6 @@ func CreateCategory(c *gin.Context) {
 
 	// Simpan ke DB
 	if err := config.DB.Create(&itemCategory).Error; err != nil {
-		// debugging isi itemCategory
-		fmt.Println("Item Category data:", itemCategory)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create itemCategory: " + err.Error()})
 		return
 	}

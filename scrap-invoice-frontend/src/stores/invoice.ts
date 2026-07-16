@@ -16,7 +16,6 @@ export const useInvoiceStore = defineStore('invoice', () => {
     error.value = null
     try {
       const res = await api.get('/invoices')
-      console.log("Fetched invoices:", res.data.data) // Debug log
       // Ambil data dari response backend, tanpa dummy data
       invoices.value = res.data.data || res.data || []
     } catch (err: any) {
@@ -30,9 +29,6 @@ export const useInvoiceStore = defineStore('invoice', () => {
 
  const createInvoice = async (payload: InvoiceForm) => {
   try {
-    console.log('📡 Store sending to API:', payload)
-    console.log('📡 customer_id type:', typeof payload.customer_id)
-    
     const res = await api.post('/invoices', payload)
     const newInvoice = res.data.data || res.data
     
@@ -63,7 +59,6 @@ export const useInvoiceStore = defineStore('invoice', () => {
   }
 
   const deleteInvoice = async (id: number) => {
-    console.log("Deleting invoice with ID:", id)
     try {
       await api.delete(`/invoices/${id}`)
       invoices.value = invoices.value.filter((inv) => inv.id !== id)

@@ -16,7 +16,6 @@ export async function createScaleDetailAPI(invoiceId: number, payload: ScaleDeta
 export async function updateScaleDetailAPI(invoiceId: number, scaleId: number, payload: any) {
   // ✅ FIX: Tambahkan scaleId di akhir URL
   const res = await axios.put(`${BASE_URL}/invoices/${invoiceId}/scales/${scaleId}`, payload)
-  console.log('Updated scale detail:', res.data.data)
   return res.data.data
 }
 

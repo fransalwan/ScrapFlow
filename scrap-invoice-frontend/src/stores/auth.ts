@@ -16,12 +16,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('🔐 Attempting login for:', email)
-      
       const credentials: LoginRequest = { email, password }
       const response = await authService.login(credentials)
-      
-      console.log('✅ Login response:', response)
       
       // Simpan ke localStorage
       localStorage.setItem('token', response.token)
@@ -30,8 +26,6 @@ export const useAuthStore = defineStore('auth', () => {
       // Update state
       token.value = response.token
       user.value = response.user
-      
-      console.log('💾 Token saved to localStorage:', response.token.substring(0, 20) + '...')
       
       return { success: true }
     } catch (error: any) {
@@ -44,7 +38,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = () => {
-    console.log('🚪 Logging out...')
     token.value = null
     user.value = null
     localStorage.removeItem('token')

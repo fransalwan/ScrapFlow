@@ -5,7 +5,7 @@
 
   <div v-if="auth.isLoggedIn" class="relative">
     <button @click="dropdown = !dropdown" class="text-sm font-medium hover:underline">
-      {{ auth.user?.username || 'User' }} ⬇️
+      {{ auth.user?.name || 'User' }} ⬇️
     </button>
 
     <div

@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '../services/api'
-import type { ScaleDetailResponse, ScaleDetailPayload, ScaleDetailUI } from '../types/scale'
+import type { ScaleDetailPayload, ScaleDetailUI } from '../types/scale'
 
 export const useScaleStore = defineStore('scale', () => {
   const scaleDetails = ref<ScaleDetailUI[]>([])
@@ -98,7 +98,7 @@ export const useScaleStore = defineStore('scale', () => {
     }
   }
 
-  const cloneScaleDetailToFI = async (invoiceId: number) => {
+  const cloneScaleDetailToFI = async (_invoiceId: number) => {
     const tlItems = scaleDetails.value.filter(detail => detail.scale_type === 'TL')
     scaleDetails.value = scaleDetails.value.filter(detail => detail.scale_type !== 'FI')
 

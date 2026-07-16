@@ -90,7 +90,7 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const auth = useAuthStore()
 
   // 1. Belum login tapi mau ke protected route -> lempar ke Login

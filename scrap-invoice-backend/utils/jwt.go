@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -19,7 +20,9 @@ func init() {
 
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		// Fallback sementara biar nggak crash, tapi WAJIB diganti di .env nanti
+		if os.Getenv("APP_ENV") == "production" {
+			log.Fatal("🚫 JWT_SECRET wajib diset di production")
+		}
 		secret = "rahasia_default_ganti_di_env"
 		println("️ WARNING: JWT_SECRET tidak ditemukan di .env, menggunakan default.")
 	}

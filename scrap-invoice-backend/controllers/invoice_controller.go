@@ -116,7 +116,7 @@ func CreateInvoice(c *gin.Context) {
 
 	// 8. Ambil ulang data lengkap dengan relasi
 	var fullInvoice models.Invoice
-	if err := config.DB.Preload("Customer").First(&fullInvoice, invoice.CustomerID).Error; err != nil {
+	if err := config.DB.Preload("Customer").First(&fullInvoice, invoice.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load customer data: " + err.Error()})
 		return
 	}
